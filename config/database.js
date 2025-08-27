@@ -56,7 +56,7 @@ function initializeTables() {
     name TEXT NOT NULL,
     phone TEXT NOT NULL UNIQUE,
     email TEXT,
-    passport_photo TEXT,
+    profile_photo TEXT,
     identity_badge_number TEXT UNIQUE,
     is_active BOOLEAN DEFAULT 1,
     is_blocked BOOLEAN DEFAULT 0,
