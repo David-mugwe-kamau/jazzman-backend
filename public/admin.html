@@ -3304,8 +3304,8 @@
                 
                 // Safe photo handling
                 let photoHtml = '';
-                if (barber.passport_photo) {
-                    photoHtml = `<img src="${escapeHtml(barber.passport_photo)}" alt="Barber photo" style="width: 100%; height: 100%; object-fit: cover;">`;
+                if (barber.profile_photo) {
+                    photoHtml = `<img src="${escapeHtml(barber.profile_photo)}" alt="Barber photo" style="width: 100%; height: 100%; object-fit: cover;">`;
                 } else {
                     photoHtml = `<div style="width: 100%; height: 100%; background: #f8f9fa; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">👨‍💼</div>`;
                 }
@@ -3392,7 +3392,7 @@
                                 <div class="control-group" style="margin-bottom: 20px;">
                                     <label class="control-label" for="barberPhoto">Profile Photo *</label>
                                     <div class="controls">
-                                        <input type="file" id="barberPhoto" name="passport_photo" accept="image/*" class="form-control" required>
+                                        <input type="file" id="barberPhoto" name="profile_photo" accept="image/*" class="form-control" required>
                                         <small class="help-text">Max size: 5MB. Supported formats: JPG, PNG, GIF</small>
                                     </div>
                                 </div>
@@ -3564,7 +3564,7 @@
             const phone = formData.get('phone')?.trim();
             const badge = formData.get('identity_badge_number')?.trim();
             const email = formData.get('email')?.trim();
-            const photoFile = formData.get('passport_photo');
+                            const photoFile = formData.get('profile_photo');
             
             // Validation checks
             if (!name || name.length < 2) {
