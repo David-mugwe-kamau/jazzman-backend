@@ -1,8 +1,10 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-// Database file path
-const dbPath = path.join(__dirname, '..', 'data', 'jazzman.db');
+// Database file path - use /tmp for Render (writable) or local data directory
+const dbPath = process.env.NODE_ENV === 'production' 
+  ? '/tmp/jazzman.db'  // Render uses /tmp for writable files
+  : path.join(__dirname, '..', 'data', 'jazzman.db');
 
 // Create database connection
 const db = new sqlite3.Database(dbPath, (err) => {
@@ -10,6 +12,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
     console.error('Error opening database:', err.message);
   } else {
     console.log('✅ Connected to SQLite database');
+    console.log('🔍 Database path:', dbPath);
     initializeTables();
   }
 });
