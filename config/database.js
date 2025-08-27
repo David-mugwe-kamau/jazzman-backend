@@ -257,6 +257,30 @@ function insertDefaultServices() {
   });
 }
 
+// Insert default working hours
+function insertDefaultWorkingHours() {
+  const workingHours = [
+    { day: 1, isOpen: 1, openTime: '08:00', closeTime: '18:00' }, // Monday
+    { day: 2, isOpen: 1, openTime: '08:00', closeTime: '18:00' }, // Tuesday
+    { day: 3, isOpen: 1, openTime: '08:00', closeTime: '18:00' }, // Wednesday
+    { day: 4, isOpen: 1, openTime: '08:00', closeTime: '18:00' }, // Thursday
+    { day: 5, isOpen: 1, openTime: '08:00', closeTime: '18:00' }, // Friday
+    { day: 6, isOpen: 1, openTime: '08:00', closeTime: '16:00' }, // Saturday
+    { day: 0, isOpen: 0, openTime: null, closeTime: null }        // Sunday
+  ];
+
+  workingHours.forEach(hours => {
+    db.run(`INSERT OR IGNORE INTO working_hours (day_of_week, is_open, open_time, close_time) VALUES (?, ?, ?, ?)`,
+      [hours.day, hours.isOpen, hours.openTime, hours.closeTime],
+      (err) => {
+        if (err) {
+          console.error('Error inserting working hours:', err.message);
+        }
+      }
+    );
+  });
+}
+
 // Insert default admin user
 function insertDefaultAdmin() {
   const bcrypt = require('bcryptjs');
