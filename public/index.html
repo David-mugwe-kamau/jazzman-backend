@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>JazzMan Housecalls - Professional Barber Services</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #041204; background-color: #008000; min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        header { background: rgba(0, 0, 0, 0.9); color: white; padding: 1rem 0; position: fixed; width: 100%; top: 0; z-index: 1000; backdrop-filter: blur(10px); }
+        .header-content { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 2rem; font-weight: bold; font-family: cursive; color: #ffd700; text-align: center; }
+        .nav-links { display: flex; gap: 2rem; }
+        .nav-links a { color: white; text-decoration: none; transition: color 0.3s; }
+        .nav-links a:hover { color: #ffd700; }
+        .main-content { margin-top: 80px; padding: 2rem 0; }
+        .hero-section { text-align: center; color: white; padding: 4rem 0; background: rgba(0, 0, 0, 0.3); border-radius: 20px; margin-bottom: 3rem; }
+        .hero-section h1 { font-size: 3rem; margin-bottom: 1rem; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); }
+        .hero-section p { font-size: 1.2rem; margin-bottom: 2rem; }
+        .services-section, .booking-section { background: white; padding: 3rem 0; border-radius: 20px; margin-bottom: 3rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
+        .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 3rem; color: #333; }
+        .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 3rem; }
+        .service-card { background: #f8f9fa; padding: 2rem; border-radius: 15px; text-align: center; transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; border: 2px solid transparent; }
+        .service-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); }
+        .service-card.selected { border-color: #ffd700; background: #fff3cd; }
+        .service-card h3 { color: #333; margin-bottom: 1rem; }
+        .service-price { font-size: 1.2rem; font-weight: bold; color: #008000; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+        .service-description { color: #666; font-size: 0.9rem; }
+        .booking-form { max-width: 800px; margin: 0 auto; padding: 0 2rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; transition: border-color 0.3s; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: #667eea; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .location-info { background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-top: 1rem; }
+        .payment-section { background: #f8f9fa; padding: 2rem; border-radius: 15px; margin: 2rem 0; border: 2px solid #ddd; }
+        .payment-methods { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0; }
+        .payment-method { padding: 1rem; border: 2px solid #ddd; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .payment-method:hover { border-color: #667eea; background: #e3f2fd; }
+        .payment-method.selected { border-color: #28a745; background: #d4edda; }
+        .payment-method input[type="radio"] { margin-right: 0.5rem; }
+        
+        .payment-note {
+            background: #e3f2fd;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #2196f3;
+            margin: 1rem 0;
+            color: #0d47a1;
+        }
+        
+        .mpesa-instructions {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid #28a745;
+            margin-top: 1rem;
+        }
+        
+        .mpesa-instructions h4 {
+            color: #28a745;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .mpesa-instructions ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .mpesa-instructions li {
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        
+        .mpesa-instructions strong {
+            color: #28a745;
+        }
+        
+        .mpesa-note {
+            background: #fff3cd;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .payment-reminder {
+            background: #e8f5e8;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid #28a745;
+            margin-top: 1rem;
+        }
+        
+        .payment-reminder h4 {
+            color: #28a745;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .payment-reminder p {
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        
+        .payment-reminder strong {
+            color: #28a745;
+        }
+        
+        .reminder-note {
+            background: #fff3cd;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            text-align: center;
+            font-weight: 500;
+            margin-top: 1rem;
+        }
+        
+        .barber-assignment { background: #e8f5e8; padding: 2rem; border-radius: 15px; margin: 2rem 0; border: 2px solid #28a745; display: none; }
+        .barber-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0; }
+        .barber-card { background: white; padding: 1.5rem; border-radius: 10px; text-align: center; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); }
+        
+        .barber-card .barber-photo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            border: 3px solid #008000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            background: #f0f8f0;
+            object-fit: cover;
+        }
+        
+        .assignment-note {
+            background: #e8f5e8;
+            color: #2d5a2d;
+            padding: 0.5rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 0.5rem;
+            border-left: 3px solid #008000;
+        }
+        .barber-photo { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: 0 auto 1rem; border: 3px solid #28a745; }
+        .identity-badge { background: #ffd700; color: #333; padding: 0.5rem 1rem; border-radius: 20px; font-weight: bold; margin: 0.5rem 0; display: inline-block; }
+        .btn { background-color: #008000; color: white; padding: 15px 30px; border: none; border-radius: 25px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .message { padding: 1rem; border-radius: 8px; margin: 1rem 0; text-align: center; }
+        .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .message.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } .services-grid { grid-template-columns: 1fr; } .hero-section h1 { font-size: 2rem; } .nav-links { display: none; } }
+        footer { background: rgba(0, 0, 0, 0.9); color: white; text-align: center; padding: 2rem 0; margin-top: 3rem; }
+        .contact-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin: 2rem 0; }
+        .contact-item { text-align: center; color: #faebd7; }
+        .contact-item i { font-size: 2rem; color: #faebd7; margin-bottom: 1rem; }
+        .form-error { color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; }
+        .required-field::after { content: " *"; color: #dc3545; }
+        
+        /* Service Selection Styles */
+        .service-selection {
+            border: 2px solid #ddd;
+            border-radius: 15px;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .service-selection legend {
+            font-weight: 600;
+            color: #333;
+            padding: 0 10px;
+            font-size: 1.1rem;
+        }
+        
+        .service-options {
+            display: grid;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .service-option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .service-option:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+        }
+        
+        .service-option input[type="radio"] {
+            margin-right: 15px;
+            transform: scale(1.2);
+        }
+        
+        .service-option input[type="radio"]:checked + .service-name {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .service-name {
+            flex: 1;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .service-price {
+            font-weight: 600;
+            color: #28a745;
+            font-size: 1.1rem;
+        }
+        
+                 @media (max-width: 768px) {
+             .service-options {
+                 grid-template-columns: 1fr;
+             }
+         }
+         
+         /* Modal Styles */
+         .modal {
+             display: none;
+             position: fixed;
+             z-index: 2000;
+             left: 0;
+             top: 0;
+             width: 100%;
+             height: 100%;
+             background-color: rgba(0, 0, 0, 0.5);
+             backdrop-filter: blur(5px);
+             overflow-y: auto;
+         }
+         
+         .modal-content {
+             background-color: white;
+             margin: 2% auto;
+             padding: 0;
+             border-radius: 15px;
+             width: 90%;
+             max-width: 500px;
+             max-height: 90vh;
+             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+             animation: modalSlideIn 0.3s ease-out;
+             display: flex;
+             flex-direction: column;
+         }
+         
+         @keyframes modalSlideIn {
+             from {
+                 transform: translateY(-50px);
+                 opacity: 0;
+             }
+             to {
+                 transform: translateY(0);
+                 opacity: 1;
+             }
+         }
+         
+         .modal-header {
+             background: #dc3545;
+             color: white;
+             padding: 1.5rem;
+             border-radius: 15px 15px 0 0;
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+         }
+         
+         .modal-header h3 {
+             margin: 0;
+             font-size: 1.3rem;
+         }
+         
+         .close {
+             color: white;
+             font-size: 2rem;
+             font-weight: bold;
+             cursor: pointer;
+             line-height: 1;
+         }
+         
+         .close:hover {
+             opacity: 0.7;
+         }
+         
+         .modal-body {
+             padding: 2rem;
+             max-height: 60vh;
+             overflow-y: auto;
+         }
+         
+         .modal-body p {
+             margin-bottom: 1rem;
+             color: #333;
+         }
+         
+         .modal-footer {
+             padding: 1.5rem 2rem;
+             border-top: 1px solid #ddd;
+             display: flex;
+             gap: 1rem;
+             justify-content: flex-end;
+             background: white;
+             position: sticky;
+             bottom: 0;
+             z-index: 1000;
+         }
+         
+         /* Cancellation Button Styles */
+         .btn-cancel {
+             background-color: #dc3545 !important;
+             margin-top: 1rem;
+         }
+         
+         .btn-cancel:hover {
+             background-color: #c82333 !important;
+         }
+         
+         .btn-danger {
+             background-color: #dc3545 !important;
+         }
+         
+         .btn-danger:hover {
+             background-color: #c82333 !important;
+         }
+         
+         .btn-secondary {
+             background-color: #6c757d !important;
+         }
+         
+         .btn-secondary:hover {
+             background-color: #5a6268 !important;
+         }
+         
+         .booking-actions {
+             text-align: center;
+             margin-top: 1.5rem;
+         }
+         
+         /* Barber Status Styles */
+         .status-active {
+             color: #28a745;
+             font-weight: 600;
+         }
+         
+         .barber-photo {
+             width: 80px;
+             height: 80px;
+             border-radius: 50%;
+             background: #f8f9fa;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             font-size: 2.5rem;
+             margin: 0 auto 1rem;
+             border: 3px solid #28a745;
+         }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">🎯 JazzMan</div>
+                <nav class="nav-links">
+                    <a href="#services">Services</a>
+                    <a href="#booking">Book Now</a>
+                    <a href="#contact">Contact</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <div class="container">
+            <section class="hero-section">
+                <h1>Professional Barber Services at Your Doorstep</h1>
+                <p>Experience premium haircuts and grooming services in the comfort of your home</p>
+                                 <button class="btn" id="heroBookBtn">Book Your Service Now</button>
+            </section>
+
+            <section id="services" class="services-section">
+                <h2 class="section-title">Why Choose JazzMan Housecalls</h2>
+                <div class="services-grid" id="servicesGrid">
+                    <div class="service-card">
+                        <h3>🏠 Home Service</h3>
+                        <div class="service-price">Convenience First</div>
+                        <p class="service-description">Professional barber services delivered to your doorstep. No more travel time or waiting in queues.</p>
+                    </div>
+                    <div class="service-card">
+                        <h3>⏰ Flexible Hours</h3>
+                        <div class="service-price">Your Schedule</div>
+                        <p class="service-description">Book appointments that fit your lifestyle. Early morning, evening, or weekend slots available.</p>
+                    </div>
+                    <div class="service-card">
+                        <h3>✂️ Expert Barbers</h3>
+                        <div class="service-price">Professional Quality</div>
+                        <p class="service-description">Skilled and experienced barbers trained in modern techniques and traditional styles.</p>
+                    </div>
+                    <div class="service-card">
+                        <h3>🎯 Premium Services</h3>
+                        <div class="service-price">Top Quality</div>
+                        <p class="service-description">From basic cuts to premium styling, we offer a range of services to meet your needs.</p>
+                    </div>
+                    <div class="service-card">
+                        <h3>💳 Easy Payment</h3>
+                        <div class="service-price">Multiple Options</div>
+                        <p class="service-description">Pay with M-Pesa or cash when the barber arrives. Secure and convenient payment methods.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="booking" class="booking-section">
+                <h2 class="section-title">Book Your Service</h2>
+                <form class="booking-form" id="bookingForm">
+                    <div class="form-group">
+                        <label class="required-field">Select Service:</label>
+                        <fieldset class="service-selection">
+                            <legend>Choose Your Service:</legend>
+                            <div class="service-options">
+                                <label class="service-option">
+                                    <input type="radio" name="service" value="Bespoke haircut" required>
+                                    <span class="service-name">Bespoke Haircut</span>
+                                    <span class="service-price">KES 3,000</span>
+                                </label>
+                                <label class="service-option">
+                                    <input type="radio" name="service" value="scissor cut" required>
+                                    <span class="service-name">Scissor Cut</span>
+                                    <span class="service-price">KES 3,500</span>
+                                </label>
+                                <label class="service-option">
+                                    <input type="radio" name="service" value="bald haircut" required>
+                                    <span class="service-name">Bald Haircut</span>
+                                    <span class="service-price">KES 2,000</span>
+                                </label>
+                                <label class="service-option">
+                                    <input type="radio" name="service" value="bald haircut with razor" required>
+                                    <span class="service-name">Bald Haircut with Razor</span>
+                                    <span class="service-price">KES 2,500</span>
+                                </label>
+                                <label class="service-option">
+                                    <input type="radio" name="service" value="Kids' Haircut" required>
+                                    <span class="service-name">Kids' Haircut</span>
+                                    <span class="service-price">KES 2,000</span>
+                                </label>
+                            </div>
+                        </fieldset>
+                        <div class="form-error" id="serviceError" style="display: none;"></div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="customerName" class="required-field">Full Name</label>
+                            <input type="text" id="customerName" name="customerName" required>
+                            <div class="form-error" id="nameError" style="display: none;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="customerPhone" class="required-field">Phone Number</label>
+                            <input type="tel" id="customerPhone" name="customerPhone" required>
+                            <div class="form-error" id="phoneError" style="display: none;"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="customerEmail">Email (Optional)</label>
+                            <input type="email" id="customerEmail" name="customerEmail">
+                            <div class="form-error" id="emailError" style="display: none;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="preferredDateTime" class="required-field">Preferred Date & Time</label>
+                            <input type="datetime-local" id="preferredDateTime" name="preferredDateTime" required>
+                            <div class="form-error" id="datetimeError" style="display: none;"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address" class="required-field">Address</label>
+                        <input type="text" id="address" name="address" required placeholder="Enter your full address">
+                        <div class="form-error" id="addressError" style="display: none;"></div>
+                    </div>
+
+
+
+                    <div class="form-group">
+                        <label for="locationNotes" class="required-field">Location Notes</label>
+                        <textarea id="locationNotes" name="locationNotes" rows="3" placeholder="Please provide detailed location information (landmarks, building name, street, area, etc.) to help the barber find you easily" required></textarea>
+                        <div class="form-error" id="locationNotesError" style="display: none;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Additional Notes (Optional)</label>
+                        <textarea id="notes" name="notes" rows="3" placeholder="Any special requests or additional information"></textarea>
+                    </div>
+
+                    <div class="payment-section">
+                        <h3>💰 Payment Information</h3>
+                        <p><strong>Service Price: </strong><span id="servicePriceDisplay">KES 0</span></p>
+                        <p class="payment-note"><em>💡 Payment will be collected when the barber arrives at your location</em></p>
+                        
+                        <div class="form-group">
+                            <label class="required-field">Select Payment Method:</label>
+                            <div class="payment-methods">
+                                <div class="payment-method" data-method="mpesa">
+                                    <input type="radio" name="paymentMethod" value="mpesa" id="mpesa">
+                                    <label for="mpesa">📱 M-Pesa (Lipa na M-Pesa)</label>
+                                </div>
+                                <div class="payment-method" data-method="cash">
+                                    <input type="radio" name="paymentMethod" value="cash" id="cash">
+                                    <label for="cash">💵 Cash</label>
+                                </div>
+                            </div>
+                            <div class="form-error" id="paymentMethodError" style="display: none;"></div>
+                        </div>
+
+                        <div class="form-group" id="mpesaPhoneGroup" style="display: none;">
+                            <label for="mpesaPhone" class="required-field">M-Pesa Phone Number</label>
+                            <input type="tel" id="mpesaPhone" name="mpesaPhone" placeholder="254XXXXXXXXX">
+                            <div class="form-error" id="mpesaPhoneError" style="display: none;"></div>
+                            
+                            <div class="mpesa-instructions" id="mpesaInstructions" style="display: none;">
+                                <h4>📱 How to Pay with M-Pesa:</h4>
+                                <ol>
+                                    <li>Dial <strong>*334#</strong> on your phone</li>
+                                    <li>Select <strong>Lipa na M-Pesa</strong></li>
+                                    <li>Select <strong>Pochi la Biashara</strong></li>
+                                    <li>Enter Business Number: <strong>+254116017256</strong></li>
+                                    <li>Enter Amount: <strong><span id="mpesaAmount">KES 0</span></strong></li>
+                                    <li>Enter your M-Pesa PIN</li>
+                                    <li>Confirm payment</li>
+                                </ol>
+                                <p class="mpesa-note"><strong>Note:</strong> pay on delivery of haircut.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn" id="submitBtn">
+                        <span id="submitText">Book Now</span>
+                        <span id="submitLoading" class="loading" style="display: none;"></span>
+                    </button>
+                </form>
+
+                <div id="messageContainer"></div>
+
+                                 <div class="barber-assignment" id="barberAssignment">
+                     <h3>🎉 Booking Confirmed! Your Barber Has Been Assigned</h3>
+                     <div class="barber-info" id="barberInfo"></div>
+                     <p class="message success">
+                         <strong>Booking successful!</strong> Your assigned barber will contact you shortly to confirm the appointment. 
+                         Payment will be collected upon service completion.
+                     </p>
+                     <div class="booking-actions">
+                         <button type="button" class="btn btn-cancel" id="cancelAppointmentBtn">
+                             ❌ Cancel Appointment
+                         </button>
+                     </div>
+                 </div>
+            </section>
+
+            <section id="contact" class="contact-info">
+                <div class="contact-item">
+                    <i>📞</i>
+                    <h3>Phone</h3>
+                    <p>+254 116017256</p>
+                </div>
+                <div class="contact-item">
+                    <i>📧</i>
+                    <h3>Email</h3>
+                    <p>jazzmanhousecalls@gmail.com</p>
+                </div>
+                <div class="contact-item">
+                    <i>📍</i>
+                    <h3>Service Area</h3>
+                    <p>Nairobi & Surrounding Areas</p>
+                </div>
+            </section>
+
+            <!-- Cancellation Modal -->
+            <div id="cancellationModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>❌ Cancel Appointment</h3>
+                                                 <span class="close" id="closeModalBtn">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to cancel your appointment?</p>
+                        <p><strong>This action cannot be undone.</strong></p>
+                        
+                        <form id="cancellationForm">
+                            <div class="form-group">
+                                <label for="cancellationReason" class="required-field">Reason for Cancellation:</label>
+                                <textarea id="cancellationReason" name="cancellationReason" rows="3" 
+                                    placeholder="Please provide a reason for cancelling your appointment (minimum 5 characters)" required></textarea>
+                                <div class="form-error" id="cancellationReasonError" style="display: none;"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="cancelledBy" class="required-field">Your Name:</label>
+                                <input type="text" id="cancelledBy" name="cancelledBy" 
+                                    placeholder="Enter your full name" required>
+                                <div class="form-error" id="cancelledByError" style="display: none;"></div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer" style="background: white; border-top: 1px solid #ddd; padding: 1.5rem 2rem;">
+                        <button type="button" class="btn btn-secondary" id="keepAppointmentBtn" style="display: inline-block !important;">Keep Appointment</button>
+                        <button type="button" class="btn btn-danger" id="submitCancellationBtn" style="display: inline-block !important;">Cancel Appointment</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 JazzMan Housecalls. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        let selectedService = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            setupFormValidation();
+            setDefaultDateTime();
+            setupServiceSelection();
+            setupEventListeners();
+        });
+
+        function selectService(serviceName, price) {
+            // Remove previous selection
+            document.querySelectorAll('.service-option').forEach(option => {
+                option.style.borderColor = '#ddd';
+                option.style.background = 'white';
+            });
+
+            // Highlight selected option
+            const selectedOption = document.querySelector(`input[value="${serviceName}"]`).closest('.service-option');
+            selectedOption.style.borderColor = '#28a745';
+            selectedOption.style.background = '#e8f5e8';
+
+            selectedService = { name: serviceName, price: price };
+            document.getElementById('servicePriceDisplay').textContent = `KES ${price.toLocaleString()}`;
+            
+            // Update M-Pesa amount if M-Pesa is selected
+            const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+            if (selectedPaymentMethod && selectedPaymentMethod.value === 'mpesa') {
+                document.getElementById('mpesaAmount').textContent = `KES ${price.toLocaleString()}`;
+            }
+            
+            hideServiceError();
+        }
+
+        function selectPaymentMethod(method) {
+            document.querySelectorAll('.payment-method').forEach(pm => {
+                pm.classList.remove('selected');
+            });
+
+            // Find the clicked payment method element
+            const clickedElement = event.target.closest('.payment-method');
+            clickedElement.classList.add('selected');
+            clickedElement.querySelector('input[type="radio"]').checked = true;
+
+            const mpesaPhoneGroup = document.getElementById('mpesaPhoneGroup');
+            const mpesaInstructions = document.getElementById('mpesaInstructions');
+            
+            if (method === 'mpesa') {
+                mpesaPhoneGroup.style.display = 'block';
+                mpesaInstructions.style.display = 'block';
+                // Update M-Pesa amount display
+                if (selectedService) {
+                    document.getElementById('mpesaAmount').textContent = `KES ${selectedService.price.toLocaleString()}`;
+                }
+            } else {
+                mpesaPhoneGroup.style.display = 'none';
+                mpesaInstructions.style.display = 'none';
+            }
+
+            // Clear previous errors
+            hidePaymentMethodError();
+            hideMpesaPhoneError();
+        }
+
+        function setDefaultDateTime() {
+            try {
+                const now = new Date();
+                const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+                tomorrow.setHours(10, 0, 0, 0);
+                
+                const dateTimeString = tomorrow.toISOString().slice(0, 16);
+                document.getElementById('preferredDateTime').value = dateTimeString;
+            } catch (error) {
+                console.error('Error setting default date time:', error);
+            }
+        }
+
+        function setupFormValidation() {
+            document.getElementById('bookingForm').addEventListener('submit', handleFormSubmit);
+        }
+
+        function setupServiceSelection() {
+            // Add event listeners to all service radio buttons
+            document.querySelectorAll('input[name="service"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        const serviceName = this.value;
+                        const servicePrice = getServicePrice(serviceName);
+                        selectService(serviceName, servicePrice);
+                    }
+                });
+            });
+        }
+
+        function getServicePrice(serviceName) {
+            const prices = {
+                'Bespoke haircut': 3000,
+                'scissor cut': 3500,
+                'bald haircut': 2000,
+                'bald haircut with razor': 2500,
+                'Kids\' Haircut': 2000
+            };
+            return prices[serviceName] || 0;
+        }
+
+        function validateForm() {
+            let isValid = true;
+            
+            // Clear all previous errors
+            hideAllErrors();
+
+            // Validate service selection
+            const selectedServiceRadio = document.querySelector('input[name="service"]:checked');
+            if (!selectedServiceRadio) {
+                showServiceError('Please select a service first.');
+                isValid = false;
+            } else {
+                selectedService = { 
+                    name: selectedServiceRadio.value, 
+                    price: getServicePrice(selectedServiceRadio.value) 
+                };
+            }
+
+            // Validate required fields
+            const requiredFields = [
+                { id: 'customerName', errorId: 'nameError', message: 'Please enter your full name.' },
+                { id: 'customerPhone', errorId: 'phoneError', message: 'Please enter your phone number.' },
+                { id: 'preferredDateTime', errorId: 'datetimeError', message: 'Please select preferred date and time.' },
+                { id: 'address', errorId: 'addressError', message: 'Please enter your address.' }
+            ];
+
+            requiredFields.forEach(field => {
+                const value = document.getElementById(field.id).value.trim();
+                if (!value) {
+                    showFieldError(field.errorId, field.message);
+                    isValid = false;
+                }
+            });
+
+            // Validate location notes
+            const locationNotes = document.getElementById('locationNotes').value.trim();
+            if (!locationNotes) {
+                showLocationError('Please provide location notes to help the barber find you.');
+                isValid = false;
+            }
+
+            // Validate payment method
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+            if (!paymentMethod) {
+                showPaymentMethodError('Please select a payment method.');
+                isValid = false;
+            }
+
+            // Validate M-Pesa phone number if M-Pesa is selected
+            if (paymentMethod && paymentMethod.value === 'mpesa') {
+                const mpesaPhone = document.getElementById('mpesaPhone').value.trim();
+                if (!mpesaPhone) {
+                    showMpesaPhoneError('Please enter your M-Pesa phone number.');
+                    isValid = false;
+                } else if (!/^254\d{9}$/.test(mpesaPhone)) {
+                    showMpesaPhoneError('Please enter a valid Kenyan phone number (254XXXXXXXXX).');
+                    isValid = false;
+                }
+            }
+
+            return isValid;
+        }
+
+                 async function handleFormSubmit(event) {
+             event.preventDefault();
+ 
+             if (!validateForm()) {
+                 return;
+             }
+ 
+             try {
+                 showLoading(true);
+                 
+                 const formData = new FormData(event.target);
+                 const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+                 const mpesaPhone = document.getElementById('mpesaPhone').value;
+                 
+                                   const bookingData = {
+                      customer_name: formData.get('customerName'),
+                      customer_phone: formData.get('customerPhone'),
+                      customer_email: formData.get('customerEmail') || null,
+                      preferred_datetime: formData.get('preferredDateTime'),
+                      address: formData.get('address'),
+                      location_notes: formData.get('locationNotes'),
+                      service_type: selectedService.name,
+                      service_price: selectedService.price,
+                      payment_method: paymentMethod,
+                      mpesa_phone: paymentMethod === 'mpesa' ? mpesaPhone : null,
+                      notes: formData.get('notes') || null
+                  };
+                  
+                  console.log('Sending booking data:', bookingData);
+ 
+                 // Create booking first
+                 const bookingResponse = await fetch('/api/bookings', {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify(bookingData)
+                 });
+ 
+                 const bookingResult = await bookingResponse.json();
+ 
+                                   if (bookingResult.success) {
+                      // Show success message with assigned barber
+                      showBookingSuccess(selectedService.price, bookingResult.booking.id, bookingResult.booking.assigned_barber);
+                  } else {
+                      console.error('Booking failed:', bookingResult);
+                      console.error('Error details:', JSON.stringify(bookingResult, null, 2));
+                      showMessage(bookingResult.message || 'Failed to create booking.', 'error');
+                  }
+                           } catch (error) {
+                  console.error('Error creating booking:', error);
+                  console.error('Error details:', error.message);
+                  showMessage('An error occurred. Please try again.', 'error');
+              } finally {
+                 showLoading(false);
+             }
+         }
+
+                 function showBookingSuccess(amount, bookingId, barberData) {
+             // Store the booking ID for cancellation
+             currentBookingId = bookingId;
+             
+             // Display assigned barber information
+             if (barberData) {
+                 const barberInfo = document.getElementById('barberInfo');
+                 
+                 // Check if barber has a profile photo
+                 const photoHtml = barberData.profile_photo ? 
+                     `<img src="${barberData.profile_photo}" alt="${barberData.name}" class="barber-photo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : 
+                     '';
+                 
+                 barberInfo.innerHTML = `
+                     <div class="barber-card">
+                         ${photoHtml}
+                         <div class="barber-photo" style="${barberData.profile_photo ? 'display: none;' : 'display: flex;'}">👨‍💼</div>
+                         <h4>${barberData.name}</h4>
+                         <p><strong>Phone:</strong> ${barberData.phone}</p>
+                         <p><strong>Status:</strong> <span class="status-active">✅ Active & Available</span></p>
+                         <p class="assignment-note">🎯 This barber has been automatically assigned to your booking</p>
+                     </div>
+                 `;
+             }
+             
+             const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+             const mpesaPhone = document.getElementById('mpesaPhone').value;
+            
+            let paymentInstructions = '';
+            if (paymentMethod === 'mpesa') {
+                paymentInstructions = `
+                    <div class="payment-reminder">
+                        <h4>📱 M-Pesa Payment Reminder</h4>
+                        <p><strong>Amount to Pay:</strong> KES ${amount.toLocaleString()}</p>
+                        <p><strong>Phone Number:</strong> ${mpesaPhone}</p>
+                        <p><strong>Payment Method:</strong> Lipa na M-Pesa → Pochi la Biashara</p>
+                        <p><strong>Business Number:</strong> +254116017256</p>
+                        <p class="reminder-note">💡 Please have your M-Pesa ready when the barber arrives. Show the confirmation message to complete the service.</p>
+                    </div>
+                `;
+            } else {
+                paymentInstructions = `
+                    <div class="payment-reminder">
+                        <h4>💵 Cash Payment Reminder</h4>
+                        <p><strong>Amount to Pay:</strong> KES ${amount.toLocaleString()}</p>
+                        <p><strong>Payment Method:</strong> Cash on Delivery</p>
+                        <p class="reminder-note">💡 Please have the exact amount ready when the barber arrives.</p>
+                    </div>
+                `;
+            }
+            
+            showMessage('Booking successful! Your barber will contact you shortly to confirm the appointment.', 'success');
+            
+                         // Show payment reminder
+             const messageContainer = document.getElementById('messageContainer');
+             const reminderDiv = document.createElement('div');
+             reminderDiv.className = 'message info';
+             reminderDiv.innerHTML = paymentInstructions;
+             messageContainer.appendChild(reminderDiv);
+             
+             // Show barber assignment section
+             document.getElementById('barberAssignment').style.display = 'block';
+             
+             // Reset form
+             document.getElementById('bookingForm').reset();
+             selectedService = null;
+             document.getElementById('servicePriceDisplay').textContent = 'KES 0';
+             document.getElementById('mpesaPhoneGroup').style.display = 'none';
+             document.getElementById('mpesaInstructions').style.display = 'none';
+             
+             // Remove selection highlighting
+             document.querySelectorAll('.service-option').forEach(option => {
+                 option.style.borderColor = '#ddd';
+                 option.style.background = 'white';
+             });
+             
+             // Remove payment method selection
+             document.querySelectorAll('.payment-method').forEach(pm => {
+                 pm.classList.remove('selected');
+             });
+        }
+
+        function showBarberAssignment(assignedBarber) {
+            const barberAssignment = document.getElementById('barberAssignment');
+            const barberInfo = document.getElementById('barberInfo');
+
+            barberInfo.innerHTML = `
+                <div class="barber-card">
+                    <img src="${assignedBarber.passport_photo || '/images/default-barber.jpg'}" 
+                         alt="${assignedBarber.name}" class="barber-photo" 
+                         onerror="this.src='/images/default-barber.jpg'">
+                    <h4>${assignedBarber.name}</h4>
+                    <div class="identity-badge">${assignedBarber.identity_badge_number}</div>
+                    <p><strong>Phone:</strong> ${assignedBarber.phone}</p>
+                </div>
+            `;
+
+            barberAssignment.style.display = 'block';
+            barberAssignment.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showLoading(show) {
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            const submitLoading = document.getElementById('submitLoading');
+
+            if (show) {
+                submitBtn.disabled = true;
+                submitText.style.display = 'none';
+                submitLoading.style.display = 'inline-block';
+            } else {
+                submitBtn.disabled = false;
+                submitText.style.display = 'inline';
+                submitLoading.style.display = 'none';
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageContainer = document.getElementById('messageContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = text;
+
+            messageContainer.innerHTML = '';
+            messageContainer.appendChild(messageDiv);
+
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        // Error handling functions
+        function showServiceError(message) {
+            document.getElementById('serviceError').textContent = message;
+            document.getElementById('serviceError').style.display = 'block';
+        }
+
+        function hideServiceError() {
+            document.getElementById('serviceError').style.display = 'none';
+        }
+
+        function showFieldError(errorId, message) {
+            document.getElementById(errorId).textContent = message;
+            document.getElementById(errorId).style.display = 'block';
+        }
+
+        function showLocationError(message) {
+            document.getElementById('locationNotesError').textContent = message;
+            document.getElementById('locationNotesError').style.display = 'block';
+        }
+
+        function hideLocationError() {
+            document.getElementById('locationNotesError').style.display = 'none';
+        }
+
+        function showPaymentMethodError(message) {
+            document.getElementById('paymentMethodError').textContent = message;
+            document.getElementById('paymentMethodError').style.display = 'block';
+        }
+
+        function hidePaymentMethodError() {
+            document.getElementById('paymentMethodError').style.display = 'none';
+        }
+
+        function showMpesaPhoneError(message) {
+            document.getElementById('mpesaPhoneError').textContent = message;
+            document.getElementById('mpesaPhoneError').style.display = 'block';
+        }
+
+        function hideMpesaPhoneError() {
+            document.getElementById('mpesaPhoneError').style.display = 'none';
+        }
+
+        function hideAllErrors() {
+            hideServiceError();
+            hideLocationError();
+            hidePaymentMethodError();
+            hideMpesaPhoneError();
+            document.querySelectorAll('.form-error').forEach(error => {
+                error.style.display = 'none';
+            });
+        }
+
+                 function scrollToSection(sectionId) {
+             const section = document.getElementById(sectionId);
+             if (section) {
+                 section.scrollIntoView({ behavior: 'smooth' });
+             }
+         }
+         
+         // Cancellation Functions
+         let currentBookingId = null;
+         
+         function showCancellationModal() {
+             // Check if we have a valid booking ID
+             if (!currentBookingId) {
+                 showMessage('No active booking found to cancel.', 'error');
+                 return;
+             }
+             
+             document.getElementById('cancellationModal').style.display = 'block';
+             document.body.style.overflow = 'hidden'; // Prevent background scrolling
+         }
+         
+         function closeCancellationModal() {
+             document.getElementById('cancellationModal').style.display = 'none';
+             document.body.style.overflow = 'auto';
+             
+             // Clear form
+             document.getElementById('cancellationForm').reset();
+             hideCancellationErrors();
+         }
+         
+         function hideCancellationErrors() {
+             document.getElementById('cancellationReasonError').style.display = 'none';
+             document.getElementById('cancelledByError').style.display = 'none';
+         }
+         
+         async function submitCancellation() {
+             const reason = document.getElementById('cancellationReason').value.trim();
+             const cancelledBy = document.getElementById('cancelledBy').value.trim();
+             
+             // Clear previous errors
+             hideCancellationErrors();
+             
+             // Validate form
+             let isValid = true;
+             
+             if (!reason || reason.length < 5) {
+                 showCancellationError('cancellationReasonError', 'Please provide a reason (minimum 5 characters)');
+                 isValid = false;
+             }
+             
+             if (!cancelledBy || cancelledBy.length < 2) {
+                 showCancellationError('cancelledByError', 'Please enter your name (minimum 2 characters)');
+                 isValid = false;
+             }
+             
+             if (!isValid) return;
+             
+             try {
+                 // Send cancellation request to backend
+                 const cancellationData = {
+                     cancellation_reason: reason,
+                     cancelled_by: cancelledBy
+                 };
+                 
+                 const response = await fetch(`/api/bookings/${currentBookingId}/cancel`, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify(cancellationData)
+                 });
+                 
+                 const result = await response.json();
+                 
+                 if (result.success) {
+                     // Show success message
+                     showMessage('Appointment cancelled successfully. Your barber has been notified.', 'success');
+                     
+                     // Close modal
+                     closeCancellationModal();
+                     
+                     // Hide the barber assignment section
+                     document.getElementById('barberAssignment').style.display = 'none';
+                     
+                     // Reset booking ID
+                     currentBookingId = null;
+                 } else {
+                     showMessage(result.message || 'Failed to cancel appointment.', 'error');
+                 }
+                 
+             } catch (error) {
+                 console.error('Error cancelling appointment:', error);
+                 showMessage('Failed to cancel appointment. Please try again.', 'error');
+             }
+         }
+         
+         function showCancellationError(errorId, message) {
+             document.getElementById(errorId).textContent = message;
+             document.getElementById(errorId).style.display = 'block';
+         }
+         
+                   // Close modal when clicking outside
+          window.onclick = function(event) {
+              const modal = document.getElementById('cancellationModal');
+              if (event.target === modal) {
+                  closeCancellationModal();
+              }
+          }
+          
+          // Setup all event listeners
+          function setupEventListeners() {
+              // Hero book button
+              const heroBookBtn = document.getElementById('heroBookBtn');
+              if (heroBookBtn) {
+                  heroBookBtn.addEventListener('click', () => scrollToSection('booking'));
+              }
+              
+              // Payment method selection
+              document.querySelectorAll('.payment-method').forEach(pm => {
+                  pm.addEventListener('click', function() {
+                      const method = this.getAttribute('data-method');
+                      selectPaymentMethod(method);
+                  });
+              });
+              
+              // Cancellation modal buttons
+              const cancelAppointmentBtn = document.getElementById('cancelAppointmentBtn');
+              if (cancelAppointmentBtn) {
+                  cancelAppointmentBtn.addEventListener('click', showCancellationModal);
+              }
+              
+              const closeModalBtn = document.getElementById('closeModalBtn');
+              if (closeModalBtn) {
+                  closeModalBtn.addEventListener('click', closeCancellationModal);
+              }
+              
+              const keepAppointmentBtn = document.getElementById('keepAppointmentBtn');
+              if (keepAppointmentBtn) {
+                  keepAppointmentBtn.addEventListener('click', closeCancellationModal);
+              }
+              
+              const submitCancellationBtn = document.getElementById('submitCancellationBtn');
+              if (submitCancellationBtn) {
+                  submitCancellationBtn.addEventListener('click', submitCancellation);
+              }
+          }
+    </script>
+</body>
+</html>
