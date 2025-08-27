@@ -19,6 +19,8 @@ const db = new sqlite3.Database(dbPath, (err) => {
 
 // Initialize database tables
 function initializeTables() {
+  console.log('🔧 Initializing database tables...');
+  
   // Create enhanced bookings table
   db.run(`CREATE TABLE IF NOT EXISTS bookings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,7 +50,7 @@ function initializeTables() {
     }
   });
 
-  // Create barbers table with enhanced features (preserve existing data)
+  // Create barbers table with enhanced features
   db.run(`CREATE TABLE IF NOT EXISTS barbers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -73,25 +75,16 @@ function initializeTables() {
     } else {
       console.log('✅ Enhanced barbers table ready');
       
-      // Check if updated_at column exists, if not add it
-      db.run(`ALTER TABLE barbers ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`, (err) => {
-        if (err && !err.message.includes('duplicate column name')) {
-          console.error('Error adding updated_at column:', err.message);
-        } else if (!err) {
-          console.log('✅ Added updated_at column to barbers table');
+      // Insert default barbers only if table is empty
+      db.get('SELECT COUNT(*) as count FROM barbers', (err, row) => {
+        if (err) {
+          console.error('Error checking barbers count:', err.message);
+        } else if (row.count === 0) {
+          console.log('📝 Inserting default barbers...');
+          insertDefaultBarbers();
+        } else {
+          console.log('✅ Barbers table already has data, skipping default insertion');
         }
-        
-        // Insert default barbers only if table is empty
-        db.get('SELECT COUNT(*) as count FROM barbers', (err, row) => {
-          if (err) {
-            console.error('Error checking barbers count:', err.message);
-          } else if (row.count === 0) {
-            console.log('📝 Inserting default barbers...');
-            insertDefaultBarbers();
-          } else {
-            console.log('✅ Barbers table already has data, skipping default insertion');
-          }
-        });
       });
     }
   });
@@ -102,14 +95,24 @@ function initializeTables() {
     name TEXT NOT NULL,
     price REAL NOT NULL,
     description TEXT,
-    is_active BOOLEAN DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`, (err) => {
     if (err) {
       console.error('Error creating services table:', err.message);
     } else {
       console.log('✅ Services table ready');
-      // insertDefaultServices(); // Commented out to start fresh
+      
+      // Insert default services only if table is empty
+      db.get('SELECT COUNT(*) as count FROM services', (err, row) => {
+        if (err) {
+          console.error('Error checking services count:', err.message);
+        } else if (row.count === 0) {
+          console.log('📝 Inserting default services...');
+          insertDefaultServices();
+        } else {
+          console.log('✅ Services table already has data, skipping default insertion');
+        }
+      });
     }
   });
 
@@ -119,9 +122,9 @@ function initializeTables() {
     booking_id INTEGER NOT NULL,
     amount REAL NOT NULL,
     payment_method TEXT NOT NULL,
-    transaction_id TEXT UNIQUE,
+    phone_number TEXT,
+    customer_notes TEXT,
     status TEXT DEFAULT 'pending',
-    receipt_sent BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (booking_id) REFERENCES bookings (id)
   )`, (err) => {
@@ -135,20 +138,60 @@ function initializeTables() {
   // Create admin users table
   db.run(`CREATE TABLE IF NOT EXISTS admin_users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL UNIQUE,
-    email TEXT NOT NULL UNIQUE,
+    username TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    role TEXT DEFAULT 'admin',
-    is_active BOOLEAN DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`, (err) => {
     if (err) {
       console.error('Error creating admin_users table:', err.message);
     } else {
       console.log('✅ Admin users table ready');
-      insertDefaultAdmin();
+      
+      // Insert default admin user only if table is empty
+      db.get('SELECT COUNT(*) as count FROM admin_users', (err, row) => {
+        if (err) {
+          console.error('Error checking admin_users count:', err.message);
+        } else if (row.count === 0) {
+          console.log('📝 Inserting default admin user...');
+          insertDefaultAdmin();
+        } else {
+          console.log('✅ Admin users table already has data, skipping default insertion');
+        }
+      });
     }
   });
+
+  // Create working hours table
+  db.run(`CREATE TABLE IF NOT EXISTS working_hours (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    day_of_week INTEGER NOT NULL,
+    is_open BOOLEAN DEFAULT 1,
+    open_time TEXT,
+    close_time TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`, (err) => {
+    if (err) {
+      console.error('Error creating working_hours table:', err.message);
+    } else {
+      console.log('✅ Working hours table ready');
+      
+      // Insert default working hours only if table is empty
+      db.get('SELECT COUNT(*) as count FROM working_hours', (err, row) => {
+        if (err) {
+          console.error('Error checking working_hours count:', err.message);
+        } else if (row.count === 0) {
+          console.log('📝 Inserting default working hours...');
+          insertDefaultWorkingHours();
+        } else {
+          console.log('✅ Working hours table already has data, skipping default insertion');
+        }
+      });
+    }
+  });
+
+  console.log('🎉 Database initialization complete!');
 }
 
 // Insert default barbers with enhanced features

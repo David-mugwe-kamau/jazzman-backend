@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JazzMan Backend QR Code</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .qr-code {
+            margin: 20px 0;
+        }
+        .url {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            word-break: break-all;
+            font-family: monospace;
+        }
+        .info {
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        .admin-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 JazzMan Backend QR Code</h1>
+        
+        <div class="url">
+            <strong>Live URL:</strong><br>
+            https://jazzman-backend.onrender.com
+        </div>
+        
+        <div class="qr-code">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://jazzman-backend.onrender.com" 
+                 alt="QR Code for JazzMan Backend" 
+                 style="border: 2px solid #ddd; border-radius: 10px;">
+        </div>
+        
+        <div class="admin-info">
+            <h3>🔐 Admin Access:</h3>
+            <strong>URL:</strong> https://jazzman-backend.onrender.com/admin<br>
+            <strong>Username:</strong> admin<br>
+            <strong>Password:</strong> JazzMan2025!
+        </div>
+        
+        <div class="info">
+            <p>📱 <strong>How to use:</strong></p>
+            <p>1. Scan this QR code with your phone's camera</p>
+            <p>2. It will open your JazzMan backend website</p>
+            <p>3. Share this QR code with others to give them easy access</p>
+        </div>
+        
+        <div class="info">
+            <p>⚠️ <strong>Note:</strong> Free Render instances may take 30-60 seconds to wake up on first visit.</p>
+        </div>
+    </div>
+</body>
+</html>
