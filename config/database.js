@@ -312,16 +312,16 @@ function insertDefaultWorkingHours() {
 // Insert default admin user
 function insertDefaultAdmin() {
   const bcrypt = require('bcryptjs');
-  const defaultPassword = 'admin123'; // Change this in production!
+  const defaultPassword = 'JazzMan2025!'; // Updated password for production
   const hashedPassword = bcrypt.hashSync(defaultPassword, 10);
 
-  db.run(`INSERT OR IGNORE INTO admin_users (username, email, password_hash) VALUES (?, ?, ?)`,
-    ['admin', 'admin@jazzman.com', hashedPassword],
+  db.run(`INSERT OR IGNORE INTO admin_users (username, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, ?)`,
+    ['admin', 'admin@jazzman.com', hashedPassword, 'admin', 1],
     (err) => {
       if (err) {
         console.error('Error inserting admin user:', err.message);
       } else {
-        console.log('✅ Default admin user created (username: admin, password: admin123)');
+        console.log('✅ Default admin user created (username: admin, password: JazzMan2025!)');
       }
     }
   );
