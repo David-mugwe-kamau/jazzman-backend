@@ -18,8 +18,19 @@ const db = new sqlite3.Database(dbPath, (err) => {
 });
 
 // Initialize database tables
-function initializeTables() {
+function initializeTables(callback) {
   console.log('🔧 Initializing database tables...');
+  
+  let tablesCreated = 0;
+  const totalTables = 6; // bookings, barbers, services, payments, admin_users, working_hours
+  
+  function checkCompletion() {
+    tablesCreated++;
+    if (tablesCreated === totalTables) {
+      console.log('🎉 Database initialization complete!');
+      if (callback) callback();
+    }
+  }
   
   // Create enhanced bookings table
   db.run(`CREATE TABLE IF NOT EXISTS bookings (
@@ -48,6 +59,7 @@ function initializeTables() {
     } else {
       console.log('✅ Enhanced bookings table ready');
     }
+    checkCompletion();
   });
 
   // Create barbers table with enhanced features
@@ -87,6 +99,7 @@ function initializeTables() {
         }
       });
     }
+    checkCompletion();
   });
 
   // Create services table
@@ -114,6 +127,7 @@ function initializeTables() {
         }
       });
     }
+    checkCompletion();
   });
 
   // Create payments table
@@ -133,6 +147,7 @@ function initializeTables() {
     } else {
       console.log('✅ Payments table ready');
     }
+    checkCompletion();
   });
 
   // Create admin users table
@@ -160,6 +175,7 @@ function initializeTables() {
         }
       });
     }
+    checkCompletion();
   });
 
   // Create working hours table
@@ -189,9 +205,8 @@ function initializeTables() {
         }
       });
     }
+    checkCompletion();
   });
-
-  console.log('🎉 Database initialization complete!');
 }
 
 // Insert default barbers with enhanced features
