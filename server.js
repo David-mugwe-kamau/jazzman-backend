@@ -60,6 +60,16 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files for main frontend only
 app.use('/', express.static(path.join(__dirname, 'public')));
 
+// Serve login page
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+// Serve admin dashboard (protected)
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
 // API Routes
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/admin', adminRoutes);

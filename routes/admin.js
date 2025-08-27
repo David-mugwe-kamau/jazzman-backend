@@ -4,8 +4,8 @@ const { runQuery, getRow, getAll } = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 const router = express.Router();
 
-// Apply authentication to all admin routes (temporarily disabled for development)
-// router.use(authenticateToken);
+// Apply authentication to all admin routes
+router.use(authenticateToken);
 
 // Get dashboard statistics
 router.get('/dashboard', async (req, res) => {
