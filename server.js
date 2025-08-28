@@ -67,7 +67,7 @@ app.get('/login', (req, res) => {
 
 // Serve admin dashboard (protected)
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 // API Routes
