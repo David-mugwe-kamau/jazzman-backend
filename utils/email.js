@@ -2,6 +2,12 @@ const nodemailer = require('nodemailer');
 
 // Create transporter (configure with your email service)
 const createTransporter = () => {
+  // Check if email credentials are configured
+  if (!process.env.EMAIL_PASS) {
+    console.log('⚠️ Email credentials not configured. Email notifications will be disabled.');
+    return null;
+  }
+
   return nodemailer.createTransport({
     service: process.env.EMAIL_SERVICE || 'gmail',
     auth: {
@@ -15,6 +21,12 @@ const createTransporter = () => {
 const sendEmail = async (emailOptions) => {
   try {
     const transporter = createTransporter();
+    
+    // If no transporter (missing credentials), skip email sending
+    if (!transporter) {
+      console.log('⚠️ Skipping email send - no email transporter available');
+      return null;
+    }
     
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -38,6 +50,12 @@ const sendEmail = async (emailOptions) => {
 const sendBookingConfirmation = async (booking) => {
   try {
     const transporter = createTransporter();
+    
+    // If no transporter (missing credentials), skip email sending
+    if (!transporter) {
+      console.log('⚠️ Skipping booking confirmation email - no email transporter available');
+      return null;
+    }
     
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -94,6 +112,12 @@ const sendBarberAssignmentNotification = async (barber, booking) => {
     }
 
     const transporter = createTransporter();
+    
+    // If no transporter (missing credentials), skip email sending
+    if (!transporter) {
+      console.log('⚠️ Skipping barber notification email - no email transporter available');
+      return null;
+    }
     
     const mailOptions = {
       from: process.env.EMAIL_USER,
