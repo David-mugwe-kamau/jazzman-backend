@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { getRow, runQuery } = require('../config/database');
+const { authenticateToken } = require('../middleware/auth');
 const router = express.Router();
 
 // Admin login
@@ -107,16 +108,8 @@ router.get('/profile', async (req, res) => {
 });
 
 // Verify token (for frontend to check if user is still logged in)
-router.get('/verify', async (req, res) => {
+router.get('/verify', authenticateToken, async (req, res) => {
   try {
-    // Check if user object exists (from middleware)
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid or missing token'
-      });
-    }
-
     const userId = req.user.id;
 
     const admin = await getRow(
