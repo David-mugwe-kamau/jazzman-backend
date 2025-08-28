@@ -49,6 +49,8 @@ function initializeTables(callback) {
     barber_identity_badge TEXT,
     status TEXT DEFAULT 'pending',
     payment_status TEXT DEFAULT 'unpaid',
+    payment_method TEXT,
+    mpesa_phone TEXT,
     notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -145,6 +147,10 @@ function initializeTables(callback) {
     phone_number TEXT,
     customer_notes TEXT,
     status TEXT DEFAULT 'pending',
+    transaction_id TEXT,
+    receipt_sent BOOLEAN DEFAULT 0,
+    payment_received_at DATETIME,
+    payment_notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (booking_id) REFERENCES bookings (id)
   )`, (err) => {
@@ -182,6 +188,29 @@ function initializeTables(callback) {
           console.log('✅ Admin users table already has data, skipping default insertion');
         }
       });
+    }
+    checkCompletion();
+  });
+
+  // Create clients table for client memory system
+  db.run(`CREATE TABLE IF NOT EXISTS clients (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    phone TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    email TEXT,
+    address TEXT,
+    location_notes TEXT,
+    service_type TEXT,
+    total_bookings INTEGER DEFAULT 0,
+    total_spent REAL DEFAULT 0.0,
+    is_active BOOLEAN DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`, (err) => {
+    if (err) {
+      console.error('Error creating clients table:', err.message);
+    } else {
+      console.log('✅ Clients table ready');
     }
     checkCompletion();
   });
