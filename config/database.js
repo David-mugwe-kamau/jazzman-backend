@@ -62,57 +62,50 @@ function initializeTables(callback) {
     checkCompletion();
   });
 
-  // TEMPORARY FIX: Force recreate barbers table to add missing columns on Render
-  db.run('DROP TABLE IF EXISTS barbers', (err) => {
+  // Create barbers table with ALL required columns
+  db.run(`CREATE TABLE IF NOT EXISTS barbers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL UNIQUE,
+    email TEXT,
+    profile_photo TEXT,
+    identity_badge_number TEXT UNIQUE,
+    is_active BOOLEAN DEFAULT 1,
+    is_blocked BOOLEAN DEFAULT 0,
+    block_reason TEXT,
+    blocked_at DATETIME,
+    block_expires_at DATETIME,
+    block_duration_hours INTEGER DEFAULT 24,
+    block_type TEXT DEFAULT 'temporary',
+    block_category TEXT,
+    block_severity TEXT DEFAULT 'medium',
+    block_warning_count INTEGER DEFAULT 0,
+    blocked_by INTEGER,
+    total_services INTEGER DEFAULT 0,
+    total_earnings REAL DEFAULT 0.0,
+    current_location TEXT,
+    last_active DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`, (err) => {
     if (err) {
-      console.error('Error dropping barbers table:', err.message);
+      console.error('Error creating barbers table:', err.message);
     } else {
-      // Create barbers table with ALL required columns
-      db.run(`CREATE TABLE IF NOT EXISTS barbers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        phone TEXT NOT NULL UNIQUE,
-        email TEXT,
-        profile_photo TEXT,
-        identity_badge_number TEXT UNIQUE,
-        is_active BOOLEAN DEFAULT 1,
-        is_blocked BOOLEAN DEFAULT 0,
-        block_reason TEXT,
-        blocked_at DATETIME,
-        block_expires_at DATETIME,
-        block_duration_hours INTEGER DEFAULT 24,
-        block_type TEXT DEFAULT 'temporary',
-        block_category TEXT,
-        block_severity TEXT DEFAULT 'medium',
-        block_warning_count INTEGER DEFAULT 0,
-        blocked_by INTEGER,
-        total_services INTEGER DEFAULT 0,
-        total_earnings REAL DEFAULT 0.0,
-        current_location TEXT,
-        last_active DATETIME DEFAULT CURRENT_TIMESTAMP,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`, (err) => {
+      console.log('✅ Enhanced barbers table ready');
+      
+      // Insert default barbers only if table is empty
+      db.get('SELECT COUNT(*) as count FROM barbers', (err, row) => {
         if (err) {
-          console.error('Error creating barbers table:', err.message);
+          console.error('Error checking barbers count:', err.message);
+        } else if (row.count === 0) {
+          console.log('📝 Inserting default barbers...');
+          insertDefaultBarbers();
         } else {
-          console.log('✅ Enhanced barbers table ready');
-          
-          // Insert default barbers only if table is empty
-          db.get('SELECT COUNT(*) as count FROM barbers', (err, row) => {
-            if (err) {
-              console.error('Error checking barbers count:', err.message);
-            } else if (row.count === 0) {
-              console.log('📝 Inserting default barbers...');
-              insertDefaultBarbers();
-            } else {
-              console.log('✅ Barbers table already has data, skipping default insertion');
-            }
-          });
+          console.log('✅ Barbers table already has data, skipping default insertion');
         }
-        checkCompletion();
       });
     }
+    checkCompletion();
   });
 
   // Create services table
