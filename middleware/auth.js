@@ -12,7 +12,8 @@ const authenticateToken = (req, res, next) => {
     });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
+  const jwtSecret = process.env.JWT_SECRET || 'JazzMan2025SecretKey123!@#';
+  jwt.verify(token, jwtSecret, (err, user) => {
     if (err) {
       return res.status(403).json({
         success: false,
@@ -31,7 +32,8 @@ const optionalAuth = (req, res, next) => {
   const token = authHeader && authHeader.split(' ')[1];
 
   if (token) {
-    jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
+    const jwtSecret = process.env.JWT_SECRET || 'JazzMan2025SecretKey123!@#';
+    jwt.verify(token, jwtSecret, (err, user) => {
       if (!err) {
         req.user = user;
       }

@@ -41,13 +41,14 @@ router.post('/login', [
     }
 
     // Generate JWT token
+    const jwtSecret = process.env.JWT_SECRET || 'JazzMan2025SecretKey123!@#';
     const token = jwt.sign(
       { 
         id: admin.id, 
         username: admin.username, 
         role: admin.role 
       },
-      process.env.JWT_SECRET || 'your-secret-key',
+      jwtSecret,
       { expiresIn: '24h' }
     );
 
@@ -108,6 +109,14 @@ router.get('/profile', async (req, res) => {
 // Verify token (for frontend to check if user is still logged in)
 router.get('/verify', async (req, res) => {
   try {
+    // Check if user object exists (from middleware)
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or missing token'
+      });
+    }
+
     const userId = req.user.id;
 
     const admin = await getRow(
