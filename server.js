@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 const { blockExpiryScheduler } = require('./utils/scheduler');
 const { dailySummaryScheduler } = require('./utils/daily-summary-scheduler');
@@ -57,6 +58,9 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Cookie parsing middleware
+app.use(cookieParser());
+
 // Serve static files for main frontend only
 app.use('/', express.static(path.join(__dirname, 'public')));
 
@@ -67,6 +71,16 @@ app.get('/login', (req, res) => {
 
 // Serve admin dashboard (protected)
 app.get('/admin', (req, res) => {
+  // Check if user has a valid JWT token in cookies or query params
+  const token = req.cookies?.adminToken || req.query.token;
+  
+  if (!token) {
+    // No token, redirect to login
+    return res.redirect('/login');
+  }
+  
+  // Token exists, serve admin dashboard
+  // The frontend will validate the token and redirect if invalid
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 

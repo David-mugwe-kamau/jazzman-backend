@@ -1263,13 +1263,18 @@
                     <i>🕐</i> Working Hours
                 </a>
             </li>
-            <li class="nav-item">
-                <a href="#settings" class="nav-link" data-tab="settings">
-                    <i>⚙️</i> Settings
-                </a>
-            </li>
-        </ul>
-    </div>
+                            <li class="nav-item">
+                    <a href="#settings" class="nav-link" data-tab="settings">
+                        <i>⚙️</i> Settings
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" id="logoutBtn">
+                        <i>🚪</i> Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
 
     <!-- Main Content -->
     <div class="main-content" id="mainContent">
@@ -1771,6 +1776,41 @@
     </div>
 
     <script>
+        // Authentication check - must be first
+        (function() {
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                console.log('No admin token found, redirecting to login');
+                window.location.href = '/login';
+                return;
+            }
+            
+            // Verify token is valid
+            fetch('/api/auth/verify', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.log('Invalid token, redirecting to login');
+                    localStorage.removeItem('adminToken');
+                    localStorage.removeItem('adminUser');
+                    window.location.href = '/login';
+                    return;
+                }
+                console.log('Authentication successful, loading dashboard');
+            })
+            .catch(error => {
+                console.error('Token verification failed:', error);
+                localStorage.removeItem('adminToken');
+                localStorage.removeItem('adminUser');
+                window.location.href = '/login';
+                return;
+            });
+        })();
+
         let currentPeriod = 'week';
         let charts = {};
 
@@ -1847,6 +1887,12 @@
             // Setup Reset Database button
             document.getElementById('resetDbBtn').addEventListener('click', function() {
                 resetDatabase();
+            });
+
+            // Setup Logout button
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                logout();
             });
 
             // Setup Refresh Barbers button
@@ -2751,6 +2797,15 @@
         // ========================================
         // UTILITY FUNCTIONS
         // ========================================
+
+        // Logout function
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('adminToken');
+                localStorage.removeItem('adminUser');
+                window.location.href = '/login';
+            }
+        }
 
         function closeModal(modalId) {
             console.log('🔧 closeModal called with:', modalId);
