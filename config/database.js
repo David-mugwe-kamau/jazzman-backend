@@ -54,6 +54,11 @@ function initializeTables(callback) {
     notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    cancellation_reason TEXT,
+    notification_sent_at DATETIME,
+    barber_notified BOOLEAN DEFAULT 0,
+    cancelled_at DATETIME,
+    cancelled_by TEXT,
     FOREIGN KEY (barber_id) REFERENCES barbers (id)
   )`, (err) => {
     if (err) {
@@ -116,6 +121,7 @@ function initializeTables(callback) {
     name TEXT NOT NULL,
     price REAL NOT NULL,
     description TEXT,
+    is_active BOOLEAN DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`, (err) => {
     if (err) {
@@ -200,9 +206,14 @@ function initializeTables(callback) {
     email TEXT,
     address TEXT,
     location_notes TEXT,
-    service_type TEXT,
+    preferred_service TEXT,
+    preferred_barber_name TEXT,
+    preferred_barber_phone TEXT,
     total_bookings INTEGER DEFAULT 0,
     total_spent REAL DEFAULT 0.0,
+    last_booking_date DATETIME,
+    favorite_service TEXT,
+    notes TEXT,
     is_active BOOLEAN DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -219,9 +230,11 @@ function initializeTables(callback) {
   db.run(`CREATE TABLE IF NOT EXISTS working_hours (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     day_of_week INTEGER NOT NULL,
+    day_name TEXT,
     is_open BOOLEAN DEFAULT 1,
     open_time TEXT,
     close_time TEXT,
+    notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`, (err) => {
