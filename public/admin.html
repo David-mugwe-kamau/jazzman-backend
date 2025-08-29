@@ -4606,16 +4606,16 @@
                         <span class="status-text" id="status-${day.day_of_week}">${day.is_open ? 'Open' : 'Closed'}</span>
                     </td>
                     <td>
-                        <input type="time" class="time-input" data-day="${day.day_of_week}" data-field="open_time" value="${day.open_time}" 
+                        <input type="time" class="time-input" data-day="${day.day_of_week}" data-field="open_time" value="${day.is_open ? day.open_time : '--:--'}" 
                                ${!day.is_open ? 'disabled' : ''}>
                     </td>
                     <td>
-                        <input type="time" class="time-input" data-day="${day.day_of_week}" data-field="close_time" value="${day.close_time}" 
+                        <input type="time" class="time-input" data-day="${day.day_of_week}" data-field="close_time" value="${day.is_open ? day.close_time : '--:--'}" 
                                ${!day.is_open ? 'disabled' : ''}>
                     </td>
                     <td>
-                        <input type="text" class="notes-input" data-day="${day.day_of_week}" data-field="notes" value="${escapeHtml(day.notes || '')}" 
-                               placeholder="Optional notes" ${!day.is_open ? 'disabled' : ''}>
+                        <input type="text" class="notes-input" data-day="${day.day_of_week}" data-field="notes" value="${day.is_open ? escapeHtml(day.notes || '') : ''}" 
+                               placeholder="${day.is_open ? 'Optional notes' : 'Day is closed'}" ${!day.is_open ? 'disabled' : ''}>
                     </td>
                     <td>
                         <button class="btn btn-sm btn-secondary reset-btn" data-day="${day.day_of_week}">
@@ -4693,14 +4693,30 @@
                     console.warn(`⚠️ Status element not found for day ${dayOfWeek}`);
                 }
 
-                // Enable/disable time inputs based on status
+                // Update the time input fields - enable/disable them based on status
                 const row = document.querySelector(`#workingHoursBody tr[data-day="${dayOfWeek}"]`);
                 if (row) {
                     const timeInputs = row.querySelectorAll('.time-input');
+                    const notesInput = row.querySelector('.notes-input');
+                    
                     timeInputs.forEach(input => {
                         input.disabled = !isOpen;
+                        if (!isOpen) {
+                            input.value = '--:--';
+                        } else if (input.value === '--:--') {
+                            // Set default times if they were empty
+                            if (input.getAttribute('data-field') === 'open_time') {
+                                input.value = '08:00';
+                            } else if (input.getAttribute('data-field') === 'close_time') {
+                                input.value = '18:00';
+                            }
+                        }
                         console.log(`✅ Time input ${input.type} ${isOpen ? 'enabled' : 'disabled'}`);
                     });
+                    
+                    if (notesInput) {
+                        notesInput.disabled = !isOpen;
+                    }
                 } else {
                     console.warn(`⚠️ Row not found for day ${dayOfWeek}`);
                 }
