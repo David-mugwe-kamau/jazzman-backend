@@ -93,8 +93,22 @@ router.get('/slots/:date', async (req, res) => {
 // Update working hours for a specific day
 router.put('/:dayOfWeek', [
   body('is_open').isBoolean().withMessage('is_open must be a boolean'),
-  body('open_time').matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Invalid open time format (HH:MM)'),
-  body('close_time').matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Invalid close time format (HH:MM)'),
+  body('open_time').custom((value, { req }) => {
+    // If day is open, time must be valid HH:MM format
+    if (req.body.is_open && value && !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
+      throw new Error('Invalid open time format (HH:MM)');
+    }
+    // If day is closed, time can be null or empty
+    return true;
+  }),
+  body('close_time').custom((value, { req }) => {
+    // If day is open, time must be valid HH:MM format
+    if (req.body.is_open && value && !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
+      throw new Error('Invalid close time format (HH:MM)');
+    }
+    // If day is closed, time can be null or empty
+    return true;
+  }),
   body('notes').optional().isString().withMessage('Notes must be a string')
 ], async (req, res) => {
   try {
@@ -114,13 +128,15 @@ router.put('/:dayOfWeek', [
     
     console.log('📝 Processing updates for day:', dayOfWeek, 'with data:', updates);
     
-    // Validate that close time is after open time
-    if (updates.open_time >= updates.close_time) {
-      console.log('❌ Invalid time range:', updates.open_time, '>=', updates.close_time);
-      return res.status(400).json({
-        success: false,
-        message: 'Close time must be after open time'
-      });
+    // Validate that close time is after open time (only when day is open)
+    if (updates.is_open && updates.open_time && updates.close_time) {
+      if (updates.open_time >= updates.close_time) {
+        console.log('❌ Invalid time range:', updates.open_time, '>=', updates.close_time);
+        return res.status(400).json({
+          success: false,
+          message: 'Close time must be after open time'
+        });
+      }
     }
     
     // Break time validation removed
