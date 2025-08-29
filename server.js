@@ -5,7 +5,7 @@ const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const { blockExpiryScheduler } = require('./utils/scheduler');
-const { dailySummaryScheduler } = require('./utils/daily-summary-scheduler');
+const dailySummaryScheduler = require('./utils/daily-summary-scheduler');
 require('dotenv').config();
 
 const app = express();
