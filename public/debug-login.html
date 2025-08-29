@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login Debug - JazzMan Admin</title>
+    <title>Login Debug - JazzMan Housecalls Admin</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -68,12 +68,21 @@
             border: 1px solid #bee5eb;
             color: #0c5460;
         }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔍 Login Debug Tool</h1>
+        <h1>🔍 Login Debug Tool - JazzMan Housecalls</h1>
         <p>This tool will help us debug the login issue step by step.</p>
+        
+        <div class="warning" style="margin-bottom: 20px;">
+            <strong>New URL:</strong> https://jazzman-housecalls.onrender.com
+        </div>
         
         <form id="loginForm">
             <div class="form-group">
@@ -94,8 +103,16 @@
         <div class="info" style="margin-top: 30px;">
             <h3>Debug Information:</h3>
             <p><strong>Current URL:</strong> <span id="currentUrl"></span></p>
+            <p><strong>API Base URL:</strong> <span id="apiBase"></span></p>
             <p><strong>Local Storage Token:</strong> <span id="storedToken"></span></p>
             <p><strong>Local Storage User:</strong> <span id="storedUser"></span></p>
+        </div>
+        
+        <div class="info" style="margin-top: 20px;">
+            <h3>Quick Links:</h3>
+            <p><a href="/admin" target="_blank">Admin Dashboard</a></p>
+            <p><a href="/login" target="_blank">Login Page</a></p>
+            <p><a href="/api/health" target="_blank">Health Check</a></p>
         </div>
     </div>
 
@@ -104,6 +121,7 @@
         
         // Display current debug info
         document.getElementById('currentUrl').textContent = window.location.href;
+        document.getElementById('apiBase').textContent = API_BASE;
         document.getElementById('storedToken').textContent = localStorage.getItem('adminToken') ? 'Present' : 'Not found';
         document.getElementById('storedUser').textContent = localStorage.getItem('adminUser') ? 'Present' : 'Not found';
         
@@ -118,7 +136,7 @@
             resultDiv.textContent = 'Testing login...';
             
             try {
-                console.log('Sending login request...');
+                console.log('Sending login request to:', `${API_BASE}/auth/login`);
                 const response = await fetch(`${API_BASE}/auth/login`, {
                     method: 'POST',
                     headers: {
