@@ -213,8 +213,8 @@ router.post('/', validatePayment, async (req, res) => {
           booking_id
         ]);
 
-        // Send notification to barber
-        await sendBarberNotification(assignedBarber, booking);
+        // Send email notification to barber
+        await sendBarberAssignmentNotification(assignedBarber, booking);
         
       } catch (error) {
         console.error('❌ Payment API: Error assigning barber:', error);

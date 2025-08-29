@@ -114,10 +114,11 @@ app.get('/api/health', (req, res) => {
 app.post('/api/test-daily-summary', async (req, res) => {
   try {
     console.log('🧪 Manual daily summary test triggered...');
-    await dailySummaryScheduler.sendDailySummaries();
+    const result = await dailySummaryScheduler.sendDailySummaries();
     res.json({ 
       success: true, 
       message: 'Daily summaries sent successfully',
+      barbersNotified: result?.successCount || 'Unknown',
       timestamp: new Date().toISOString()
     });
   } catch (error) {

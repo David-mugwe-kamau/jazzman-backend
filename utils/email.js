@@ -189,8 +189,92 @@ const sendBarberAssignmentNotification = async (barber, booking) => {
   }
 };
 
+// Send daily sales summary to barber
+const sendDailySalesSummary = async (barber, dailyStats) => {
+  try {
+    // Check if barber has an email address
+    if (!barber.email) {
+      console.log(`⚠️ Barber ${barber.name} has no email address. Skipping daily summary email.`);
+      return null;
+    }
+
+    const transporter = createTransporter();
+    
+    // If no transporter (missing credentials), skip email sending
+    if (!transporter) {
+      console.log('⚠️ Skipping daily summary email - no email transporter available');
+      return null;
+    }
+    
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: barber.email,
+      subject: '📊 Daily Sales Summary - JazzMan Housecalls',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #008000; color: white; padding: 20px; text-align: center;">
+            <h1>📊 JazzMan Housecalls</h1>
+            <p>Daily Sales Summary</p>
+          </div>
+          
+          <div style="padding: 20px; background-color: #f9f9f9;">
+            <h2>🎉 Great job today, ${barber.name}!</h2>
+            <p>Here's your daily performance summary for <strong>${dailyStats.date}</strong>:</p>
+            
+            <div style="background-color: white; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #008000;">
+              <h3>💰 Today's Earnings:</h3>
+              <p><strong>Total Services:</strong> ${dailyStats.totalServices}</p>
+              <p><strong>Total Earnings:</strong> KSh ${dailyStats.totalEarnings.toLocaleString()}</p>
+              <p><strong>Average per Service:</strong> KSh ${dailyStats.averagePerService.toLocaleString()}</p>
+            </div>
+
+            <div style="background-color: #e8f5e8; padding: 20px; margin: 20px 0; border-radius: 8px; border: 2px solid #28a745;">
+              <h3>📋 Services Completed:</h3>
+              ${dailyStats.services.map(service => `
+                <div style="margin: 10px 0; padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
+                  <p><strong>${service.service_type}</strong> - KSh ${service.service_price.toLocaleString()}</p>
+                  <p style="color: #666; font-size: 14px;">${service.customer_name} at ${new Date(service.preferred_datetime).toLocaleTimeString('en-KE')}</p>
+                </div>
+              `).join('')}
+            </div>
+
+            <div style="background-color: #fff3cd; padding: 20px; margin: 20px 0; border-radius: 8px; border: 2px solid #ffc107;">
+              <h3>📈 Performance Insights:</h3>
+              <p><strong>Best Service:</strong> ${dailyStats.bestService}</p>
+              <p><strong>Peak Hours:</strong> ${dailyStats.peakHours}</p>
+              <p><strong>Customer Satisfaction:</strong> ${dailyStats.satisfactionRate}%</p>
+            </div>
+
+            <div style="background-color: #d1ecf1; padding: 20px; margin: 20px 0; border-radius: 8px; border: 2px solid #17a2b8;">
+              <h3>🎯 Tomorrow's Goals:</h3>
+              <p>Keep up the excellent work! Your dedication to quality service is what makes JazzMan Housecalls special.</p>
+              <p><strong>Target for tomorrow:</strong> ${Math.ceil(dailyStats.totalServices * 1.1)} services</p>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px;">
+              <p style="color: #666; font-size: 14px;">
+                <strong>Thank you for your hard work!</strong><br>
+                JazzMan Housecalls Team
+              </p>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`📧 Daily sales summary sent to ${barber.name} (${barber.email}):`, info.messageId);
+    return info;
+
+  } catch (error) {
+    console.error(`❌ Error sending daily sales summary to ${barber.name}:`, error);
+    throw error;
+  }
+};
+
 module.exports = {
   sendEmail,
   sendBookingConfirmation,
-  sendBarberAssignmentNotification
+  sendBarberAssignmentNotification,
+  sendDailySalesSummary
 };
