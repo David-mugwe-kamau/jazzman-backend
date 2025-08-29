@@ -13,8 +13,6 @@ const authenticateToken = (req, res, next) => {
   }
 
   const jwtSecret = process.env.JWT_SECRET || 'JazzMan2025SecretKey123!@#';
-  console.log('Auth middleware - JWT_SECRET from env:', process.env.JWT_SECRET ? 'SET' : 'NOT SET');
-  console.log('Auth middleware - Using JWT_SECRET:', jwtSecret);
   jwt.verify(token, jwtSecret, (err, user) => {
     if (err) {
       return res.status(403).json({

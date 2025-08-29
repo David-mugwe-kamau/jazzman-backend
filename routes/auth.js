@@ -43,8 +43,6 @@ router.post('/login', [
 
     // Generate JWT token
     const jwtSecret = process.env.JWT_SECRET || 'JazzMan2025SecretKey123!@#';
-    console.log('JWT_SECRET from env:', process.env.JWT_SECRET ? 'SET' : 'NOT SET');
-    console.log('Using JWT_SECRET:', jwtSecret);
     const token = jwt.sign(
       { 
         id: admin.id, 
