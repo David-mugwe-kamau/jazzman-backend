@@ -98,10 +98,15 @@ app.use('/api/analytics', analyticsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    message: 'JazzMan Housecalls API is running',
-    timestamp: new Date().toISOString()
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      PORT: process.env.PORT,
+      JWT_SECRET_SET: !!process.env.JWT_SECRET,
+      JWT_SECRET_LENGTH: process.env.JWT_SECRET ? process.env.JWT_SECRET.length : 0
+    }
   });
 });
 
