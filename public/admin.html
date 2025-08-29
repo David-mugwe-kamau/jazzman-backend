@@ -4626,9 +4626,23 @@
                 
                 // Enable/disable time inputs based on initial status
                 const timeInputs = row.querySelectorAll('.time-input');
+                const notesInput = row.querySelector('.notes-input');
+                
                 timeInputs.forEach(input => {
                     input.disabled = !day.is_open;
+                    // Ensure proper values are displayed
+                    if (!day.is_open) {
+                        input.value = '--:--';
+                    }
                 });
+                
+                if (notesInput) {
+                    notesInput.disabled = !day.is_open;
+                    if (!day.is_open) {
+                        notesInput.value = '';
+                        notesInput.placeholder = 'Day is closed';
+                    }
+                }
             });
             
             // Set up event listeners after table is populated
@@ -4703,7 +4717,7 @@
                         input.disabled = !isOpen;
                         if (!isOpen) {
                             input.value = '--:--';
-                        } else if (input.value === '--:--') {
+                        } else if (input.value === '--:--' || input.value === '') {
                             // Set default times if they were empty
                             if (input.getAttribute('data-field') === 'open_time') {
                                 input.value = '08:00';
@@ -4716,6 +4730,12 @@
                     
                     if (notesInput) {
                         notesInput.disabled = !isOpen;
+                        if (!isOpen) {
+                            notesInput.value = '';
+                            notesInput.placeholder = 'Day is closed';
+                        } else {
+                            notesInput.placeholder = 'Optional notes';
+                        }
                     }
                 } else {
                     console.warn(`⚠️ Row not found for day ${dayOfWeek}`);
