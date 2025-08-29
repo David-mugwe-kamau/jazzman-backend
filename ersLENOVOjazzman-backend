@@ -1,0 +1,5 @@
+[33m918e600[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Add debug login page to troubleshoot frontend login issue
+[33m5884ea7[m Remove debugging code - JWT authentication now working
+[33m7dab0ea[m Add JWT_SECRET debugging to auth routes and middleware
+[33mfcf36e9[m Add environment variable debugging to health endpoint
+[33mb15280c[m Fix verify endpoint: Add authentication middleware to /api/auth/verify
