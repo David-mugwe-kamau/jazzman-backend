@@ -71,8 +71,8 @@ app.get('/login', (req, res) => {
 
 // Serve admin dashboard (protected)
 app.get('/admin', (req, res) => {
-  // Check if user has a valid JWT token in cookies or query params
-  const token = req.cookies?.adminToken || req.query.token;
+  // Check if user has a valid JWT token in cookies, query params, or Authorization header
+  const token = req.cookies?.adminToken || req.query.token || req.headers.authorization?.replace('Bearer ', '');
   
   if (!token) {
     // No token, redirect to login

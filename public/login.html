@@ -199,8 +199,8 @@
                     localStorage.setItem('adminToken', data.token);
                     localStorage.setItem('adminUser', JSON.stringify(data.user));
                     
-                    // Redirect to admin dashboard
-                    window.location.href = '/admin';
+                    // Redirect to admin dashboard with token
+                    window.location.href = `/admin?token=${data.token}`;
                 } else {
                     throw new Error(data.message || 'Login failed');
                 }
