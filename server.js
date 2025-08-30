@@ -339,32 +339,40 @@ app.listen(PORT, () => {
   console.log(`🔧 Admin dashboard: http://localhost:${PORT}/admin`);
   
   // Wait for database initialization before starting schedulers
-  const { db } = require('./config/database');
+  const { getRow } = require('./config/database');
   
-  // Check if database is ready (tables exist)
-  db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='barbers'", (err, row) => {
-    if (err) {
-      console.error('❌ Error checking database readiness:', err.message);
-    } else if (row) {
-      console.log('✅ Database ready, starting schedulers...');
-      // Start the block expiry scheduler
-      blockExpiryScheduler.start();
-      
-      // Start the daily summary scheduler
-      dailySummaryScheduler.start();
-    } else {
-      console.log('⏳ Waiting for database initialization...');
-      // Wait a bit more for tables to be created
-      setTimeout(() => {
-        console.log('✅ Starting schedulers after delay...');
+  // Check if database is ready (tables exist) - PostgreSQL compatible
+  const checkDatabaseReady = async () => {
+    try {
+      const row = await getRow("SELECT table_name FROM information_schema.tables WHERE table_name = 'barbers'");
+      if (row) {
+        console.log('✅ Database ready, starting schedulers...');
         // Start the block expiry scheduler
         blockExpiryScheduler.start();
         
         // Start the daily summary scheduler
         dailySummaryScheduler.start();
-      }, 2000); // Wait 2 seconds for tables to be created
+      } else {
+        console.log('⏳ Waiting for database initialization...');
+        // Wait a bit more for tables to be created
+        setTimeout(() => {
+          console.log('✅ Starting schedulers after delay...');
+          // Start the block expiry scheduler
+          blockExpiryScheduler.start();
+          
+          // Start the daily summary scheduler
+          dailySummaryScheduler.start();
+        }, 2000); // Wait 2 seconds for tables to be created
+      }
+    } catch (error) {
+      console.error('❌ Error checking database readiness:', error.message);
+      // Wait a bit more and try again
+      setTimeout(checkDatabaseReady, 2000);
     }
-  });
+  };
+  
+  // Start checking database readiness
+  checkDatabaseReady();
 });
 
 module.exports = app;
