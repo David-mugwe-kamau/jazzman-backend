@@ -2,6 +2,27 @@ const express = require('express');
 const router = express.Router();
 const { getRow, getAll, runQuery } = require('../config/database');
 
+// Utility function to ensure payment_method_used column exists (Render-safe)
+async function ensurePaymentMethodUsedColumn() {
+  try {
+    // Check if column exists first
+    const columnCheck = await getRow(`PRAGMA table_info(payments)`);
+    const hasColumn = columnCheck && columnCheck.some(col => col.name === 'payment_method_used');
+    
+    if (!hasColumn) {
+      await runQuery(`ALTER TABLE payments ADD COLUMN payment_method_used TEXT`);
+      console.log('✅ Added payment_method_used column to payments table');
+      return true;
+    } else {
+      console.log('✅ payment_method_used column already exists');
+      return false;
+    }
+  } catch (migrationError) {
+    console.log('⚠️ Migration note:', migrationError.message);
+    return false;
+  }
+}
+
 // Get all payments with booking and customer details
 router.get('/', async (req, res) => {
   try {
@@ -103,6 +124,9 @@ router.put('/:id/mark-received', async (req, res) => {
     const { id } = req.params;
     const { payment_notes, payment_method_used } = req.body;
 
+    // Ensure payment_method_used column exists (Render-safe migration)
+    await ensurePaymentMethodUsedColumn();
+
     // Get current payment details
     const currentPayment = await getRow(`
       SELECT p.*, b.customer_name, b.service_type, br.name as barber_name
@@ -126,7 +150,7 @@ router.put('/:id/mark-received', async (req, res) => {
       });
     }
 
-    // Update payment status
+    // Update payment status - handle missing columns gracefully
     const result = await runQuery(`
       UPDATE payments 
       SET 
@@ -179,6 +203,10 @@ router.put('/:id/mark-received', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error marking payment as received:', error);
+    console.error('🔍 Payment ID:', id);
+    console.error('🔍 Request body:', req.body);
+    console.error('🔍 Current payment:', currentPayment);
+    
     res.status(500).json({
       success: false,
       message: 'Failed to mark payment as received',
@@ -192,6 +220,9 @@ router.put('/:id/mark-pending', async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;
+
+    // Ensure payment_method_used column exists (Render-safe migration)
+    await ensurePaymentMethodUsedColumn();
 
     // Get current payment details
     const currentPayment = await getRow(`
@@ -246,6 +277,10 @@ router.put('/:id/mark-pending', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error marking payment as pending:', error);
+    console.error('🔍 Payment ID:', id);
+    console.error('🔍 Request body:', req.body);
+    console.error('🔍 Current payment:', currentPayment);
+    
     res.status(500).json({
       success: false,
       message: 'Failed to mark payment as pending',

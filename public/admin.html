@@ -2473,16 +2473,28 @@
 
         async function markPaymentReceived(paymentId) {
             try {
+                // Get payment details to send default values
+                const payment = paymentsData.find(p => p.id === paymentId);
+                if (!payment) {
+                    alert('❌ Payment not found');
+                    return;
+                }
+
                 const response = await fetch(`/api/payment-management/${paymentId}/mark-received`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        payment_notes: 'Payment received by barber',
+                        payment_method_used: payment.payment_method || 'Cash'
+                    })
                 });
 
                 if (response.ok) {
                     await loadPayments();
                     alert('✅ Payment marked as received!');
                 } else {
-                    throw new Error('Failed to update payment');
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to update payment');
                 }
             } catch (error) {
                 console.error('Error updating payment:', error);
@@ -2494,14 +2506,18 @@
             try {
                 const response = await fetch(`/api/payment-management/${paymentId}/mark-pending`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        reason: 'Payment reverted to pending'
+                    })
                 });
 
                 if (response.ok) {
                     await loadPayments();
                     alert('✅ Payment marked as pending!');
                 } else {
-                    throw new Error('Failed to update payment');
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to update payment');
                 }
             } catch (error) {
                 console.error('Error updating payment:', error);
@@ -5152,16 +5168,28 @@
 
         async function markPaymentReceived(paymentId) {
             try {
+                // Get payment details to send default values
+                const payment = paymentsData.find(p => p.id === paymentId);
+                if (!payment) {
+                    alert('❌ Payment not found');
+                    return;
+                }
+
                 const response = await fetch(`/api/payment-management/${paymentId}/mark-received`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        payment_notes: 'Payment received by barber',
+                        payment_method_used: payment.payment_method || 'Cash'
+                    })
                 });
 
                 if (response.ok) {
                     await loadPayments();
                     alert('✅ Payment marked as received!');
                 } else {
-                    throw new Error('Failed to update payment');
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to update payment');
                 }
             } catch (error) {
                 console.error('Error updating payment:', error);
@@ -5173,14 +5201,18 @@
             try {
                 const response = await fetch(`/api/payment-management/${paymentId}/mark-pending`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        reason: 'Payment reverted to pending'
+                    })
                 });
 
                 if (response.ok) {
                     await loadPayments();
                     alert('✅ Payment marked as pending!');
                 } else {
-                    throw new Error('Failed to update payment');
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to update payment');
                 }
             } catch (error) {
                 console.error('Error updating payment:', error);

@@ -150,6 +150,7 @@ function initializeTables(callback) {
     booking_id INTEGER NOT NULL,
     amount REAL NOT NULL,
     payment_method TEXT NOT NULL,
+    payment_method_used TEXT,
     phone_number TEXT,
     customer_notes TEXT,
     status TEXT DEFAULT 'pending',
@@ -164,6 +165,17 @@ function initializeTables(callback) {
       console.error('Error creating payments table:', err.message);
     } else {
       console.log('✅ Payments table ready');
+      
+      // Add missing payment_method_used column if it doesn't exist (migration)
+      db.run(`ALTER TABLE payments ADD COLUMN payment_method_used TEXT`, (err) => {
+        if (err && !err.message.includes('duplicate column name')) {
+          console.error('Error adding payment_method_used column:', err.message);
+        } else if (err && err.message.includes('duplicate column name')) {
+          console.log('✅ payment_method_used column already exists');
+        } else {
+          console.log('✅ Added payment_method_used column to existing payments table');
+        }
+      });
     }
     checkCompletion();
   });
