@@ -305,6 +305,48 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
+// Quick fix: Create admin user endpoint (remove this after first use)
+app.post('/api/create-admin', async (req, res) => {
+  try {
+    const bcrypt = require('bcryptjs');
+    const { getRow, runQuery } = require('./config/database');
+    
+    // Check if admin already exists
+    const existingAdmin = await getRow('SELECT id FROM admin_users WHERE username = $1', ['admin']);
+    
+    if (existingAdmin) {
+      return res.json({ success: true, message: 'Admin user already exists' });
+    }
+    
+    // Create admin user
+    const defaultPassword = 'JazzMan2025!';
+    const hashedPassword = bcrypt.hashSync(defaultPassword, 10);
+    
+    await runQuery(`
+      INSERT INTO admin_users (username, email, password_hash, role, is_active) 
+      VALUES ($1, $2, $3, $4, $5)
+    `, ['admin', 'admin@jazzman.com', hashedPassword, 'admin', true]);
+    
+    console.log('✅ Admin user created via API endpoint');
+    res.json({ 
+      success: true, 
+      message: 'Admin user created successfully',
+      credentials: {
+        username: 'admin',
+        password: 'JazzMan2025!'
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error creating admin user:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to create admin user',
+      error: error.message 
+    });
+  }
+});
+
 // Payment management endpoint
 app.get('/payment-management', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'payment-management.html'));
