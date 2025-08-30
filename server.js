@@ -84,7 +84,14 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Quick fix: Create admin user endpoint (remove this after first use)
+// API Routes
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/barbers', barberManagementRoutes);  // Move this BEFORE publicRoutes
+app.use('/api/working-hours', workingHoursRoutes);
+
+// Quick fix: Create admin user endpoint (remove this after first use) - PLACED BEFORE publicRoutes
 app.post('/api/create-admin', async (req, res) => {
   try {
     const bcrypt = require('bcryptjs');
@@ -126,12 +133,6 @@ app.post('/api/create-admin', async (req, res) => {
   }
 });
 
-// API Routes
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/barbers', barberManagementRoutes);  // Move this BEFORE publicRoutes
-app.use('/api/working-hours', workingHoursRoutes);
 app.use('/api', publicRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/payment-management', paymentManagementRoutes);
