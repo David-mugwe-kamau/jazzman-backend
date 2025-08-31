@@ -67,7 +67,7 @@ router.get('/daily-analysis', async (req, res) => {
       params.push(start_date, end_date);
     } else {
       // Default to last 30 days
-      dateFilter = 'WHERE DATE(b.created_at) >= DATE("now", "-30 days")';
+      dateFilter = 'WHERE DATE(b.created_at) >= CURRENT_DATE - INTERVAL \'30 days\'';
     }
 
     const dailyAnalysis = await getAll(`
@@ -125,9 +125,9 @@ router.get('/weekly-analysis', async (req, res) => {
     
     const weeklyAnalysis = await getAll(`
       SELECT 
-        strftime('%Y-%W', b.created_at) as week,
-        MIN(DATE(b.created_at, 'weekday 0', '-6 days')) as week_start,
-        MAX(DATE(b.created_at, 'weekday 0')) as week_end,
+        TO_CHAR(b.created_at, 'IYYY-IW') as week,
+        MIN(DATE(b.created_at)) as week_start,
+        MAX(DATE(b.created_at)) as week_end,
         COUNT(*) as total_bookings,
         COUNT(CASE WHEN b.status = 'completed' THEN 1 END) as completed_bookings,
         COUNT(CASE WHEN b.status = 'pending' THEN 1 END) as pending_bookings,
@@ -136,21 +136,21 @@ router.get('/weekly-analysis', async (req, res) => {
         COUNT(DISTINCT b.customer_phone) as unique_customers,
         COUNT(DISTINCT b.barber_id) as active_barbers
       FROM bookings b
-      WHERE DATE(b.created_at) >= DATE("now", "-${weeks * 7} days")
-      GROUP BY strftime('%Y-%W', b.created_at)
+      WHERE DATE(b.created_at) >= CURRENT_DATE - INTERVAL '${weeks * 7} days'
+      GROUP BY TO_CHAR(b.created_at, 'IYYY-IW')
       ORDER BY week DESC
     `);
 
     // Get weekly service breakdown
     const weeklyServiceBreakdown = await getAll(`
       SELECT 
-        strftime('%Y-%W', b.created_at) as week,
+        TO_CHAR(b.created_at, 'IYYY-IW') as week,
         b.service_type,
         COUNT(*) as count,
         SUM(b.service_price) as revenue
       FROM bookings b
-      WHERE DATE(b.created_at) >= DATE("now", "-${weeks * 7} days")
-      GROUP BY strftime('%Y-%W', b.created_at), b.service_type
+      WHERE DATE(b.created_at) >= CURRENT_DATE - INTERVAL '${weeks * 7} days'
+      GROUP BY TO_CHAR(b.created_at, 'IYYY-IW'), b.service_type
       ORDER BY week DESC, revenue DESC
     `);
 

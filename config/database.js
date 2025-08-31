@@ -233,7 +233,7 @@ async function initializePostgresTables() {
     await runQuery(`
       CREATE TABLE IF NOT EXISTS working_hours (
         id SERIAL PRIMARY KEY,
-        day_of_week INTEGER NOT NULL,
+        day_of_week INTEGER NOT NULL UNIQUE,
         day_name TEXT,
         is_open BOOLEAN DEFAULT TRUE,
         open_time TEXT,

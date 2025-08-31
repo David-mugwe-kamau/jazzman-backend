@@ -20,13 +20,13 @@ async function checkExpiringBlocks() {
       SELECT 
         b.id, b.name, b.email, b.phone,
         b.block_expires_at, b.block_reason, b.block_duration_hours,
-        ((julianday(b.block_expires_at) - julianday('now')) * 24) as hours_until_expiry
+        EXTRACT(EPOCH FROM (b.block_expires_at::timestamp - CURRENT_TIMESTAMP)) / 3600 as hours_until_expiry
       FROM barbers b
       WHERE b.is_blocked = 1 
         AND b.block_type = 'temporary'
         AND b.block_expires_at IS NOT NULL
-        AND b.block_expires_at > datetime('now')
-        AND b.block_expires_at <= datetime('now', '+24 hours')
+        AND b.block_expires_at > CURRENT_TIMESTAMP
+        AND b.block_expires_at <= CURRENT_TIMESTAMP + INTERVAL '24 hours'
       ORDER BY b.block_expires_at ASC
     `);
     
