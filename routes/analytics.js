@@ -327,7 +327,7 @@ router.get('/customers', async (req, res) => {
         SUM(b.service_price) as total_spent,
         MIN(b.created_at) as first_booking,
         MAX(b.created_at) as last_booking,
-        GROUP_CONCAT(DISTINCT b.service_type) as services_used
+        STRING_AGG(DISTINCT b.service_type, ', ') as services_used
       FROM bookings b
       WHERE DATE(b.created_at) BETWEEN ? AND ?
       GROUP BY b.customer_phone

@@ -392,11 +392,11 @@ router.get('/stats/overview', async (req, res) => {
     const params = [];
     
     if (period === 'today') {
-      dateFilter = 'AND DATE(p.created_at) = DATE("now")';
+      dateFilter = 'AND DATE(p.created_at) = CURRENT_DATE';
     } else if (period === 'week') {
-      dateFilter = 'AND DATE(p.created_at) >= DATE("now", "-7 days")';
+      dateFilter = 'AND DATE(p.created_at) >= CURRENT_DATE - INTERVAL \'7 days\'';
     } else if (period === 'month') {
-      dateFilter = 'AND DATE(p.created_at) >= DATE("now", "-30 days")';
+      dateFilter = 'AND DATE(p.created_at) >= CURRENT_DATE - INTERVAL \'30 days\'';
     }
 
     const stats = await getRow(`
@@ -421,7 +421,7 @@ router.get('/stats/overview', async (req, res) => {
         SUM(CASE WHEN p.status = 'completed' THEN p.amount ELSE 0 END) as revenue,
         COUNT(CASE WHEN p.status = 'completed' THEN 1 END) as payments
       FROM payments p
-      WHERE DATE(p.created_at) >= DATE("now", "-7 days")
+      WHERE DATE(p.created_at) >= CURRENT_DATE - INTERVAL '7 days'
       GROUP BY DATE(p.created_at)
       ORDER BY date DESC
     `);

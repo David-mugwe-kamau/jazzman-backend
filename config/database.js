@@ -557,7 +557,7 @@ function insertDefaultAdminSQLite() {
   );
 }
 
-// Insert default admin user
+// Insert default admin user (SQLite version - for backward compatibility)
 function insertDefaultAdmin() {
   const bcrypt = require('bcryptjs');
   const defaultPassword = 'JazzMan2025!'; // Updated password for production
