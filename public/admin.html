@@ -3473,8 +3473,8 @@
                                         <label class="control-label" for="barberStatus">Initial Status</label>
                                         <div class="controls">
                                             <select id="barberStatus" name="is_active" class="form-control">
-                                                <option value="1" selected>🟢 Active</option>
-                                                <option value="0">🔴 Inactive</option>
+                                                <option value="true" selected>🟢 Active</option>
+                                                <option value="false">🔴 Inactive</option>
                                             </select>
                                         </div>
                                     </div>
@@ -4250,8 +4250,8 @@
                                         <label class="control-label" for="editBarberStatus">Status</label>
                                         <div class="controls">
                                             <select id="editBarberStatus" name="is_active" class="form-control">
-                                                <option value="1" ${barber.is_active ? 'selected' : ''}>🟢 Active</option>
-                                                <option value="0" ${!barber.is_active ? 'selected' : ''}>🔴 Inactive</option>
+                                                <option value="true" ${barber.is_active ? 'selected' : ''}>🟢 Active</option>
+                                                <option value="false" ${!barber.is_active ? 'selected' : ''}>🔴 Inactive</option>
                                             </select>
                                         </div>
                                     </div>
