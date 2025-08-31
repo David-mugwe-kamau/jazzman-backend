@@ -160,7 +160,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Add new barber with photo upload
-router.post('/', upload.single('passport_photo'), async (req, res) => {
+router.post('/', upload.single('profile_photo'), async (req, res) => {
   try {
     const {
       name,
@@ -197,10 +197,10 @@ router.post('/', upload.single('passport_photo'), async (req, res) => {
       });
     }
 
-    // Handle passport photo upload
-    let passportPhotoPath = null;
+    // Handle profile photo upload
+    let profilePhotoPath = null;
     if (req.file) {
-      passportPhotoPath = `/uploads/passports/${req.file.filename}`;
+      profilePhotoPath = `/uploads/profiles/${req.file.filename}`;
     }
 
     // Set default values for optional fields
@@ -208,13 +208,19 @@ router.post('/', upload.single('passport_photo'), async (req, res) => {
     const servicesCount = total_services ? parseInt(total_services) : 0;
     const earningsAmount = total_earnings ? parseFloat(total_earnings) : 0.0;
 
+    // Debug: Log the values being inserted
+    console.log('🔄 Inserting barber with values:', {
+      name, phone, email, passportPhotoPath, identity_badge_number, 
+      current_location, servicesCount, earningsAmount, activeStatus
+    });
+
     // Insert new barber
     const result = await runQuery(`
       INSERT INTO barbers (
-        name, phone, email, passport_photo, identity_badge_number,
+        name, phone, email, profile_photo, identity_badge_number,
         current_location, total_services, total_earnings, is_active
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-    `, [name, phone, email, passportPhotoPath, identity_badge_number, current_location, servicesCount, earningsAmount, activeStatus]);
+    `, [name, phone, email, profilePhotoPath, identity_badge_number, current_location, servicesCount, earningsAmount, activeStatus]);
 
     // Get the created barber
     const newBarber = await getRow('SELECT * FROM barbers WHERE id = $1', [result.id]);
@@ -343,12 +349,12 @@ router.delete('/:id', async (req, res) => {
     }
 
     // Delete passport photo if exists
-    if (existingBarber.passport_photo) {
-      const photoPath = path.join(__dirname, '../public', existingBarber.passport_photo);
-      if (fs.existsSync(photoPath)) {
-        fs.unlinkSync(photoPath);
+          if (existingBarber.profile_photo) {
+        const photoPath = path.join(__dirname, '../public', existingBarber.profile_photo);
+        if (fs.existsSync(photoPath)) {
+          fs.unlinkSync(photoPath);
+        }
       }
-    }
 
     // Delete barber
     await runQuery('DELETE FROM barbers WHERE id = $1', [id]);
