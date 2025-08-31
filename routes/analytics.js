@@ -63,7 +63,7 @@ router.get('/daily-analysis', async (req, res) => {
     const params = [];
     
     if (start_date && end_date) {
-      dateFilter = 'WHERE DATE(b.created_at) BETWEEN ? AND ?';
+      dateFilter = 'WHERE DATE(b.created_at) BETWEEN $1 AND $2';
       params.push(start_date, end_date);
     } else {
       // Default to last 30 days
@@ -194,8 +194,8 @@ router.get('/barber-performance', async (req, res) => {
         MAX(bk.created_at) as last_booking
       FROM barbers b
       LEFT JOIN bookings bk ON b.id = bk.barber_id 
-        AND DATE(bk.created_at) BETWEEN ? AND ?
-      WHERE b.is_active = 1
+                 AND DATE(bk.created_at) BETWEEN $1 AND $2
+       WHERE b.is_active = true
       GROUP BY b.id
       ORDER BY period_revenue DESC, period_bookings DESC
     `, [startDate, endDate]);
@@ -210,8 +210,8 @@ router.get('/barber-performance', async (req, res) => {
         SUM(CASE WHEN bk.status = 'completed' THEN bk.service_price ELSE 0 END) as revenue
       FROM barbers b
       JOIN bookings bk ON b.id = bk.barber_id
-      WHERE DATE(bk.created_at) BETWEEN ? AND ?
-        AND b.is_active = 1
+             WHERE DATE(bk.created_at) BETWEEN $1 AND $2
+         AND b.is_active = true
       GROUP BY b.id, DATE(bk.created_at)
       ORDER BY b.name, date DESC
     `, [startDate, endDate]);
@@ -250,8 +250,8 @@ router.get('/revenue', async (req, res) => {
         SUM(CASE WHEN p.payment_method = 'cash' THEN p.amount ELSE 0 END) as cash_revenue,
         SUM(CASE WHEN p.payment_method = 'card' THEN p.amount ELSE 0 END) as card_revenue
       FROM payments p
-      WHERE DATE(p.created_at) BETWEEN ? AND ?
-    `, [startDate, endDate]);
+             WHERE DATE(p.created_at) BETWEEN $1 AND $2
+     `, [startDate, endDate]);
 
     // Get daily revenue trends
     const dailyRevenue = await getAll(`
@@ -263,8 +263,8 @@ router.get('/revenue', async (req, res) => {
         COUNT(CASE WHEN p.payment_method = 'cash' THEN 1 END) as cash_count,
         COUNT(CASE WHEN p.payment_method = 'card' THEN 1 END) as card_count
       FROM payments p
-      WHERE DATE(p.created_at) BETWEEN ? AND ?
-      GROUP BY DATE(p.created_at)
+             WHERE DATE(p.created_at) BETWEEN $1 AND $2
+       GROUP BY DATE(p.created_at)
       ORDER BY date DESC
     `, [startDate, endDate]);
 
@@ -277,8 +277,8 @@ router.get('/revenue', async (req, res) => {
         SUM(CASE WHEN p.status = 'completed' THEN p.amount ELSE 0 END) as total_revenue,
         AVG(CASE WHEN p.status = 'completed' THEN p.amount ELSE NULL END) as average_amount
       FROM payments p
-      WHERE DATE(p.created_at) BETWEEN ? AND ?
-      GROUP BY p.payment_method
+             WHERE DATE(p.created_at) BETWEEN $1 AND $2
+       GROUP BY p.payment_method
       ORDER BY total_revenue DESC
     `, [startDate, endDate]);
 
@@ -315,8 +315,8 @@ router.get('/customers', async (req, res) => {
         AVG(b.service_price) as average_booking_value,
         COUNT(DISTINCT DATE(b.created_at)) as active_days
       FROM bookings b
-      WHERE DATE(b.created_at) BETWEEN ? AND ?
-    `, [startDate, endDate]);
+             WHERE DATE(b.created_at) BETWEEN $1 AND $2
+     `, [startDate, endDate]);
 
     // Get customer retention (repeat customers)
     const repeatCustomers = await getAll(`
@@ -329,7 +329,7 @@ router.get('/customers', async (req, res) => {
         MAX(b.created_at) as last_booking,
         STRING_AGG(DISTINCT b.service_type, ', ') as services_used
       FROM bookings b
-      WHERE DATE(b.created_at) BETWEEN ? AND ?
+      WHERE DATE(b.created_at) BETWEEN $1 AND $2
       GROUP BY b.customer_phone
       HAVING booking_count > 1
       ORDER BY booking_count DESC, total_spent DESC
@@ -348,7 +348,7 @@ router.get('/customers', async (req, res) => {
         COUNT(*) as total_bookings,
         SUM(b.service_price) as total_revenue
       FROM bookings b
-      WHERE DATE(b.created_at) BETWEEN ? AND ?
+      WHERE DATE(b.created_at) BETWEEN $1 AND $2
       GROUP BY b.customer_phone
       GROUP BY customer_type
       ORDER BY total_revenue DESC
@@ -390,8 +390,8 @@ router.get('/services', async (req, res) => {
         COUNT(DISTINCT b.customer_phone) as unique_customers,
         COUNT(DISTINCT b.barber_id) as barbers_assigned
       FROM bookings b
-      WHERE DATE(b.created_at) BETWEEN ? AND ?
-      GROUP BY b.service_type
+             WHERE DATE(b.created_at) BETWEEN $1 AND $2
+       GROUP BY b.service_type
       ORDER BY total_revenue DESC
     `, [startDate, endDate]);
 
@@ -403,8 +403,8 @@ router.get('/services', async (req, res) => {
         COUNT(*) as bookings,
         SUM(b.service_price) as revenue
       FROM bookings b
-      WHERE DATE(b.created_at) BETWEEN ? AND ?
-      GROUP BY DATE(b.created_at), b.service_type
+             WHERE DATE(b.created_at) BETWEEN $1 AND $2
+       GROUP BY DATE(b.created_at), b.service_type
       ORDER BY date DESC, revenue DESC
     `, [startDate, endDate]);
 
@@ -473,7 +473,7 @@ async function getBookingStats(startDate, endDate) {
       COUNT(DISTINCT customer_phone) as unique_customers,
       COUNT(DISTINCT barber_id) as active_barbers
     FROM bookings 
-    WHERE DATE(created_at) BETWEEN ? AND ?
+    WHERE DATE(created_at) BETWEEN $1 AND $2
   `, [startDate, endDate]);
 }
 
@@ -486,7 +486,7 @@ async function getRevenueStats(startDate, endDate) {
       COUNT(CASE WHEN p.status = 'failed' THEN 1 END) as failed_payments,
       AVG(CASE WHEN p.status = 'completed' THEN p.amount ELSE NULL END) as average_payment
     FROM payments p
-    WHERE DATE(p.created_at) BETWEEN ? AND ?
+    WHERE DATE(p.created_at) BETWEEN $1 AND $2
   `, [startDate, endDate]);
 }
 
@@ -502,8 +502,8 @@ async function getBarberPerformance(startDate, endDate) {
       AVG(CASE WHEN bk.status = 'completed' THEN bk.service_price ELSE NULL END) as average_service_price
     FROM barbers b
     LEFT JOIN bookings bk ON b.id = bk.barber_id 
-      AND DATE(bk.created_at) BETWEEN ? AND ?
-    WHERE b.is_active = 1
+      AND DATE(bk.created_at) BETWEEN $1 AND $2
+    WHERE b.is_active = true
     GROUP BY b.id
     ORDER BY period_revenue DESC
     LIMIT 10
@@ -518,7 +518,7 @@ async function getServiceBreakdown(startDate, endDate) {
       COUNT(*) as bookings,
       SUM(CASE WHEN status = 'completed' THEN service_price ELSE 0 END) as revenue
     FROM bookings 
-    WHERE DATE(created_at) BETWEEN ? AND ?
+    WHERE DATE(created_at) BETWEEN $1 AND $2
     GROUP BY service_type
     ORDER BY revenue DESC
   `, [startDate, endDate]);
@@ -532,7 +532,7 @@ async function getDailyTrends(startDate, endDate) {
       COUNT(*) as bookings,
       SUM(CASE WHEN status = 'completed' THEN service_price ELSE 0 END) as revenue
     FROM bookings 
-    WHERE DATE(created_at) BETWEEN ? AND ?
+    WHERE DATE(created_at) BETWEEN $1 AND $2
     GROUP BY DATE(created_at)
     ORDER BY date DESC
     LIMIT 30
@@ -547,9 +547,10 @@ async function getTopServices(startDate, endDate) {
       COUNT(*) as bookings,
       SUM(CASE WHEN status = 'completed' THEN service_price ELSE 0 END) as revenue
     FROM bookings 
-    WHERE DATE(created_at) BETWEEN ? AND ?
+    WHERE DATE(created_at) BETWEEN $1 AND $2
     GROUP BY service_type
     ORDER BY revenue DESC
+    LIMIT 5
     LIMIT 5
   `, [startDate, endDate]);
 }
@@ -563,7 +564,7 @@ async function getCustomerMetrics(startDate, endDate) {
       COUNT(*) as total_bookings,
       AVG(service_price) as average_booking_value
     FROM bookings 
-    WHERE DATE(created_at) BETWEEN ? AND ?
+    WHERE DATE(created_at) BETWEEN $1 AND $2
   `, [startDate, endDate]);
 }
 

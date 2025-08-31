@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
       FROM clients c
       LEFT JOIN bookings b ON c.phone = b.customer_phone
       LEFT JOIN payments p ON b.id = p.booking_id
-      WHERE c.is_active = 1
+      WHERE c.is_active = true
       GROUP BY c.id
       ORDER BY c.total_bookings DESC, c.last_booking_date DESC
     `);
@@ -47,7 +47,7 @@ router.get('/phone/:phone', async (req, res) => {
       FROM clients c
       LEFT JOIN bookings b ON c.phone = b.customer_phone
       LEFT JOIN payments p ON b.id = p.booking_id
-      WHERE c.phone = ? AND c.is_active = 1
+      WHERE c.phone = $1 AND c.is_active = true
       GROUP BY c.id
     `, [phone]);
 
@@ -72,7 +72,7 @@ router.get('/phone/:phone', async (req, res) => {
       FROM bookings b
       LEFT JOIN barbers br ON b.barber_id = br.id
       LEFT JOIN payments p ON b.id = p.booking_id
-      WHERE b.customer_phone = ?
+      WHERE b.customer_phone = $1
       ORDER BY b.created_at DESC
       LIMIT 10
     `, [phone]);

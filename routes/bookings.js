@@ -336,7 +336,7 @@ router.get('/', async (req, res) => {
     // }
 
     // Add ordering and pagination
-    sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+    sql += ' ORDER BY created_at DESC LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2);
     params.push(parseInt(limit), parseInt(offset));
 
     const bookings = await getAll(sql, params);
@@ -366,7 +366,7 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    const booking = await getRow('SELECT * FROM bookings WHERE id = ?', [id]);
+    const booking = await getRow('SELECT * FROM bookings WHERE id = $1', [id]);
     
     if (!booking) {
       return res.status(404).json({
@@ -405,7 +405,7 @@ router.patch('/:id/status', [
     const { status, notes } = req.body;
 
     // Check if booking exists
-    const existingBooking = await getRow('SELECT * FROM bookings WHERE id = ?', [id]);
+    const existingBooking = await getRow('SELECT * FROM bookings WHERE id = $1', [id]);
     if (!existingBooking) {
       return res.status(404).json({
         success: false,
@@ -415,12 +415,12 @@ router.patch('/:id/status', [
 
     // Update booking
     await runQuery(
-      'UPDATE bookings SET status = ?, notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      'UPDATE bookings SET status = $1, notes = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
       [status, notes, id]
     );
 
     // Get updated booking
-    const updatedBooking = await getRow('SELECT * FROM bookings WHERE id = ?', [id]);
+    const updatedBooking = await getRow('SELECT * FROM bookings WHERE id = $1', [id]);
 
     res.json({
       success: true,
