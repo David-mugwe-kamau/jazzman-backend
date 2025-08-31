@@ -54,7 +54,7 @@ router.post('/', validateBooking, async (req, res) => {
     }
 
     // Check for time slot conflicts (prevent double-booking)
-    // All services take 1 hour + 0.5 hour travel buffer each way = 3 hour total per booking
+    // All services take 1 hour + 1 hour travel buffer each way = 3 hour total per booking
     const timeSlotConflict = await getRow(`
       SELECT 
         id, customer_name, customer_phone, barber_name, service_type,
@@ -66,10 +66,10 @@ router.post('/', validateBooking, async (req, res) => {
           -- Same time slot (exact match)
           preferred_datetime = $1 
           OR 
-          -- Overlapping time slots (1 hour service + 0.5 hour travel buffer each way)
+          -- Overlapping time slots (1 hour service + 1 hour travel buffer each way)
           (
             preferred_datetime BETWEEN 
-              $2::timestamp - INTERVAL '1.5 hours' AND $3::timestamp + INTERVAL '1.5 hours'
+              $2::timestamp - INTERVAL '1 hour' AND $3::timestamp + INTERVAL '1 hour'
           )
         )
       LIMIT 1
@@ -78,7 +78,7 @@ router.post('/', validateBooking, async (req, res) => {
     if (timeSlotConflict) {
       return res.status(409).json({
         success: false,
-        message: `This time slot is not available. Another customer (${timeSlotConflict.customer_name}) has a ${timeSlotConflict.service_type} appointment at ${new Date(timeSlotConflict.preferred_datetime).toLocaleString('en-KE')}. All services require a 3-hour time slot (1 hour service + 0.5 hour travel buffer each way). Please choose a different time.`,
+        message: `This time slot is not available. Another customer (${timeSlotConflict.customer_name}) has a ${timeSlotConflict.service_type} appointment at ${new Date(timeSlotConflict.preferred_datetime).toLocaleString('en-KE')}. All services require a 3-hour time slot (1 hour service + 1 hour travel buffer each way). Please choose a different time.`,
         error: 'TIME_SLOT_CONFLICT',
         conflicting_booking: {
           id: timeSlotConflict.id,
@@ -210,7 +210,7 @@ router.post('/', validateBooking, async (req, res) => {
     }
 
     // Check for barber-specific scheduling conflicts (prevent same barber from having overlapping appointments)
-    // This ensures each barber has proper time management: 1 hour service + 0.5 hour travel buffer each way
+    // This ensures each barber has proper time management: 1 hour service + 1 hour travel buffer each way
     const barberSchedulingConflict = await getRow(`
       SELECT 
         id, customer_name, customer_phone, barber_name, service_type,
@@ -223,10 +223,10 @@ router.post('/', validateBooking, async (req, res) => {
           -- Same time slot (exact match)
           preferred_datetime = $2 
           OR 
-          -- Overlapping time slots for the same barber (1 hour service + 0.5 hour travel buffer each way)
+          -- Overlapping time slots for the same barber (1 hour service + 1 hour travel buffer each way)
           (
             preferred_datetime BETWEEN 
-              $3::timestamp - INTERVAL '1.5 hours' AND $4::timestamp + INTERVAL '1.5 hours'
+              $3::timestamp - INTERVAL '1 hour' AND $4::timestamp + INTERVAL '1 hour'
           )
         )
       LIMIT 1
