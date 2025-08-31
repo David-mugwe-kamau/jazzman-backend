@@ -4111,7 +4111,7 @@
                 email: 'Loading...',
                 identity_badge_number: 'Loading...',
                 current_location: 'Loading...',
-                is_active: 1,
+                is_active: true,
                 total_services: 0,
                 total_earnings: 0
             };
@@ -4147,7 +4147,7 @@
                         email: 'Error loading data',
                         identity_badge_number: 'Error loading data',
                         current_location: 'Error loading data',
-                        is_active: 1,
+                        is_active: true,
                         total_services: 0,
                         total_earnings: 0
                     });
@@ -4170,7 +4170,7 @@
             if (emailField) emailField.value = barber.email || '';
             if (badgeField) badgeField.value = barber.identity_badge_number || '';
             if (locationField) locationField.value = barber.current_location || '';
-            if (statusField) statusField.value = barber.is_active ? '1' : '0';
+            if (statusField) statusField.value = barber.is_active ? 'true' : 'false';
             if (servicesField) servicesField.value = barber.total_services || 0;
             if (earningsField) earningsField.value = barber.total_earnings || 0;
         }
@@ -4381,7 +4381,7 @@
                     email: email,
                     identity_badge_number: badge,
                     current_location: location,
-                    is_active: status === '1' ? 1 : 0,
+                    is_active: status === 'true',
                     total_services: parseInt(services) || 0,
                     total_earnings: parseFloat(earnings) || 0
                 };

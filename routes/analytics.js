@@ -390,8 +390,8 @@ router.get('/services', async (req, res) => {
         COUNT(DISTINCT b.customer_phone) as unique_customers,
         COUNT(DISTINCT b.barber_id) as barbers_assigned
       FROM bookings b
-             WHERE DATE(b.created_at) BETWEEN $1 AND $2
-       GROUP BY b.service_type
+      WHERE DATE(b.created_at) BETWEEN $1 AND $2
+      GROUP BY b.service_type
       ORDER BY total_revenue DESC
     `, [startDate, endDate]);
 
@@ -403,8 +403,8 @@ router.get('/services', async (req, res) => {
         COUNT(*) as bookings,
         SUM(b.service_price) as revenue
       FROM bookings b
-             WHERE DATE(b.created_at) BETWEEN $1 AND $2
-       GROUP BY DATE(b.created_at), b.service_type
+      WHERE DATE(b.created_at) BETWEEN $1 AND $2
+      GROUP BY DATE(b.created_at), b.service_type
       ORDER BY date DESC, revenue DESC
     `, [startDate, endDate]);
 
