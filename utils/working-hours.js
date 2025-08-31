@@ -185,15 +185,22 @@ class WorkingHoursManager {
     try {
       const { runQuery } = require('../config/database');
       
+      console.log('🔄 WorkingHoursManager.updateWorkingHours called with:', {
+        dayOfWeek,
+        updates
+      });
+      
       const result = await runQuery(`
         UPDATE working_hours 
-        SET is_open = ?, open_time = ?, close_time = ?, 
-            notes = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE day_of_week = ?
+        SET is_open = $1, open_time = $2, close_time = $3, 
+            notes = $4, updated_at = CURRENT_TIMESTAMP
+        WHERE day_of_week = $5
       `, [
         updates.is_open, updates.open_time, updates.close_time,
         updates.notes, dayOfWeek
       ]);
+      
+      console.log('✅ WorkingHoursManager.updateWorkingHours result:', result);
       
       // Clear cache to force refresh
       this.cache = null;
@@ -201,7 +208,7 @@ class WorkingHoursManager {
       
       return result;
     } catch (error) {
-      console.error('Error updating working hours:', error);
+      console.error('❌ Error updating working hours:', error);
       throw error;
     }
   }

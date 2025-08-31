@@ -141,6 +141,11 @@ router.put('/:dayOfWeek', [
     
     // Break time validation removed
     
+    console.log('🔄 About to call workingHoursManager.updateWorkingHours with:', {
+      dayOfWeek: parseInt(dayOfWeek),
+      updates
+    });
+    
     const result = await workingHoursManager.updateWorkingHours(parseInt(dayOfWeek), updates);
     
     console.log('✅ Working hours updated successfully:', result);
