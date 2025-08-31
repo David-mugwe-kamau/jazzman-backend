@@ -246,10 +246,10 @@ async function initializePostgresTables() {
     console.log('✅ Working hours table ready');
 
     // Insert default working hours
-    await insertDefaultWorkingHours();
+    await insertDefaultWorkingHoursPostgres();
     
     // Insert default admin user
-    await insertDefaultAdmin();
+    await insertDefaultAdminPostgres();
 
     console.log('🎉 PostgreSQL initialization complete!');
 
@@ -472,7 +472,7 @@ function initializeTables(callback) {
 }
 
 // Insert default working hours (PostgreSQL version)
-async function insertDefaultWorkingHours() {
+async function insertDefaultWorkingHoursPostgres() {
   const workingHours = [
     { day: 1, dayName: 'Monday', isOpen: true, openTime: '08:00', closeTime: '18:00' },
     { day: 2, dayName: 'Tuesday', isOpen: true, openTime: '08:00', closeTime: '18:00' },
@@ -497,7 +497,7 @@ async function insertDefaultWorkingHours() {
 }
 
 // Insert default admin user (PostgreSQL version)
-async function insertDefaultAdmin() {
+async function insertDefaultAdminPostgres() {
   try {
     const bcrypt = require('bcryptjs');
     const defaultPassword = 'JazzMan2025!';

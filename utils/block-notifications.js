@@ -22,7 +22,7 @@ async function checkExpiringBlocks() {
         b.block_expires_at, b.block_reason, b.block_duration_hours,
         EXTRACT(EPOCH FROM (b.block_expires_at::timestamp - CURRENT_TIMESTAMP)) / 3600 as hours_until_expiry
       FROM barbers b
-      WHERE b.is_blocked = 1 
+      WHERE b.is_blocked = true 
         AND b.block_type = 'temporary'
         AND b.block_expires_at IS NOT NULL
         AND b.block_expires_at > CURRENT_TIMESTAMP
