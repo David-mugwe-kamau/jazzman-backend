@@ -21,7 +21,7 @@ router.post('/login', [
 
     // Find admin user
     const admin = await getRow(
-      'SELECT * FROM admin_users WHERE username = ? AND is_active = 1',
+      'SELECT * FROM admin_users WHERE username = $1 AND is_active = true',
       [username]
     );
 
@@ -83,7 +83,7 @@ router.get('/profile', async (req, res) => {
     const userId = req.user.id;
 
     const admin = await getRow(
-      'SELECT id, username, email, role, created_at FROM admin_users WHERE id = ?',
+      'SELECT id, username, email, role, created_at FROM admin_users WHERE id = $1',
       [userId]
     );
 
@@ -115,7 +115,7 @@ router.get('/verify', authenticateToken, async (req, res) => {
     const userId = req.user.id;
 
     const admin = await getRow(
-      'SELECT id, username, email, role FROM admin_users WHERE id = ? AND is_active = 1',
+      'SELECT id, username, email, role FROM admin_users WHERE id = $1 AND is_active = true',
       [userId]
     );
 

@@ -25,7 +25,7 @@ router.get('/dashboard', async (req, res) => {
     // Get today's bookings
     const todayBookings = await getAll(`
       SELECT * FROM bookings 
-      WHERE DATE(preferred_datetime) = DATE('now') 
+      WHERE DATE(preferred_datetime) = CURRENT_DATE 
       ORDER BY preferred_datetime ASC
     `);
 
