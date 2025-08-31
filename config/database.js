@@ -195,21 +195,45 @@ async function initializePostgresTables() {
     await runQuery(`
       CREATE TABLE IF NOT EXISTS admin_users (
         id SERIAL PRIMARY KEY,
-        username TEXT UNIQUE NOT NULL,
-        email TEXT UNIQUE NOT NULL,
+        username TEXT NOT NULL,
+        email TEXT NOT NULL,
         password_hash TEXT NOT NULL,
         role TEXT DEFAULT 'admin',
         is_active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    
+    // Ensure UNIQUE constraints exist (migration for existing tables)
+    try {
+      await runQuery(`
+        ALTER TABLE admin_users 
+        ADD CONSTRAINT admin_users_username_unique 
+        UNIQUE (username)
+      `);
+      console.log('✅ Admin users username UNIQUE constraint added');
+    } catch (error) {
+      console.log('ℹ️ Admin users username UNIQUE constraint already exists');
+    }
+    
+    try {
+      await runQuery(`
+        ALTER TABLE admin_users 
+        ADD CONSTRAINT admin_users_email_unique 
+        UNIQUE (email)
+      `);
+      console.log('✅ Admin users email UNIQUE constraint added');
+    } catch (error) {
+      console.log('ℹ️ Admin users email UNIQUE constraint already exists');
+    }
+    
     console.log('✅ Admin users table ready');
 
     // Create clients table
     await runQuery(`
       CREATE TABLE IF NOT EXISTS clients (
         id SERIAL PRIMARY KEY,
-        phone TEXT UNIQUE NOT NULL,
+        phone TEXT NOT NULL,
         name TEXT NOT NULL,
         email TEXT,
         address TEXT,
@@ -227,13 +251,26 @@ async function initializePostgresTables() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    
+    // Ensure UNIQUE constraint exists (migration for existing tables)
+    try {
+      await runQuery(`
+        ALTER TABLE clients 
+        ADD CONSTRAINT clients_phone_unique 
+        UNIQUE (phone)
+      `);
+      console.log('✅ Clients phone UNIQUE constraint added');
+    } catch (error) {
+      console.log('ℹ️ Clients phone UNIQUE constraint already exists');
+    }
+    
     console.log('✅ Clients table ready');
 
     // Create working hours table
     await runQuery(`
       CREATE TABLE IF NOT EXISTS working_hours (
         id SERIAL PRIMARY KEY,
-        day_of_week INTEGER NOT NULL UNIQUE,
+        day_of_week INTEGER NOT NULL,
         day_name TEXT,
         is_open BOOLEAN DEFAULT TRUE,
         open_time TEXT,
@@ -243,6 +280,20 @@ async function initializePostgresTables() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    
+    // Ensure UNIQUE constraint exists (migration for existing tables)
+    try {
+      await runQuery(`
+        ALTER TABLE working_hours 
+        ADD CONSTRAINT working_hours_day_of_week_unique 
+        UNIQUE (day_of_week)
+      `);
+      console.log('✅ Working hours UNIQUE constraint added');
+    } catch (error) {
+      // Constraint might already exist, ignore error
+      console.log('ℹ️ Working hours UNIQUE constraint already exists');
+    }
+    
     console.log('✅ Working hours table ready');
 
     // Insert default working hours
