@@ -98,7 +98,7 @@ router.post('/', validateBooking, async (req, res) => {
       FROM bookings 
       WHERE 
         customer_phone = $1 
-        AND DATE(preferred_datetime) = DATE($2)
+        AND DATE(preferred_datetime::timestamp) = DATE($2::timestamp)
         AND status NOT IN ('cancelled', 'completed', 'no_show')
       LIMIT 1
     `, [customer_phone, preferred_datetime]);
@@ -198,7 +198,7 @@ router.post('/', validateBooking, async (req, res) => {
       const totalBookingsToday = await getRow(`
         SELECT COUNT(*) as count 
         FROM bookings 
-        WHERE DATE(created_at) = CURRENT_DATE 
+        WHERE DATE(created_at::timestamp) = CURRENT_DATE 
         AND status != 'cancelled'
       `);
       
@@ -326,7 +326,7 @@ router.get('/', async (req, res) => {
     }
     
     if (date) {
-      sql += ' AND DATE(preferred_datetime) = DATE($' + (params.length + 1) + ')';
+      sql += ' AND DATE(preferred_datetime::timestamp) = DATE($' + (params.length + 1) + '::timestamp)';
       params.push(date);
     }
 
