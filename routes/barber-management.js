@@ -210,9 +210,20 @@ router.post('/', upload.single('profile_photo'), async (req, res) => {
 
     // Debug: Log the values being inserted
     console.log('🔄 Inserting barber with values:', {
-      name, phone, email, passportPhotoPath, identity_badge_number, 
+      name, phone, email, profilePhotoPath, identity_badge_number, 
       current_location, servicesCount, earningsAmount, activeStatus
     });
+    
+    // Debug: Log the SQL query
+    console.log('🔄 SQL Query:', `
+      INSERT INTO barbers (
+        name, phone, email, profile_photo, identity_badge_number,
+        current_location, total_services, total_earnings, is_active
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `);
+    
+    // Debug: Log the parameters
+    console.log('🔄 Parameters:', [name, phone, email, profilePhotoPath, identity_badge_number, current_location, servicesCount, earningsAmount, activeStatus]);
 
     // Insert new barber
     const result = await runQuery(`
@@ -232,7 +243,13 @@ router.post('/', upload.single('profile_photo'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error adding barber:', error);
+    console.error('❌ Error adding barber:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      detail: error.detail
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to add barber',
