@@ -115,27 +115,27 @@ router.post('/upsert', async (req, res) => {
 
     // Check if client exists
     const existingClient = await getRow(`
-      SELECT * FROM clients WHERE phone = ?
+      SELECT * FROM clients WHERE phone = $1
     `, [phone]);
 
     if (existingClient) {
       // Update existing client
-      const result = await runQuery(`
-        UPDATE clients 
-        SET 
-          name = ?,
-          email = COALESCE(?, email),
-          address = COALESCE(?, address),
-          location_notes = COALESCE(?, location_notes),
-          total_bookings = total_bookings + 1,
-          last_booking_date = CURRENT_TIMESTAMP,
-          favorite_service = CASE 
-            WHEN ? IS NOT NULL THEN ?
-            ELSE favorite_service
-          END,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE phone = ?
-      `, [name, email, address, location_notes, service_type, service_type, phone]);
+             const result = await runQuery(`
+         UPDATE clients 
+         SET 
+           name = $1,
+           email = COALESCE($2, email),
+           address = COALESCE($3, address),
+           location_notes = COALESCE($4, location_notes),
+           total_bookings = total_bookings + 1,
+           last_booking_date = CURRENT_TIMESTAMP,
+           favorite_service = CASE 
+             WHEN $5 IS NOT NULL THEN $6
+             ELSE favorite_service
+           END,
+           updated_at = CURRENT_TIMESTAMP
+         WHERE phone = $7
+       `, [name, email, address, location_notes, service_type, service_type, phone]);
 
       if (result.changes === 0) {
         return res.status(400).json({
@@ -154,13 +154,13 @@ router.post('/upsert', async (req, res) => {
       });
     } else {
       // Create new client
-      const result = await runQuery(`
-        INSERT INTO clients (
-          phone, name, email, address, location_notes, 
-          preferred_service, total_bookings, last_booking_date,
-          favorite_service, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      `, [phone, name, email, address, location_notes, service_type, service_type]);
+             const result = await runQuery(`
+         INSERT INTO clients (
+           phone, name, email, address, location_notes, 
+           preferred_service, total_bookings, last_booking_date,
+           favorite_service, created_at, updated_at
+         ) VALUES ($1, $2, $3, $4, $5, $6, 1, CURRENT_TIMESTAMP, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       `, [phone, name, email, address, location_notes, service_type, service_type]);
 
       if (result.lastID) {
         console.log(`👤 Created new client: ${name} (${phone}) - First booking: ${service_type}`);
@@ -200,16 +200,16 @@ router.put('/:id/preferences', async (req, res) => {
       notes 
     } = req.body;
 
-    const result = await runQuery(`
-      UPDATE clients 
-      SET 
-        preferred_service = COALESCE(?, preferred_service),
-        preferred_barber_name = COALESCE(?, preferred_barber_name),
-        preferred_barber_phone = COALESCE(?, preferred_barber_phone),
-        notes = COALESCE(?, notes),
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `, [preferred_service, preferred_barber_name, preferred_barber_phone, notes, id]);
+           const result = await runQuery(`
+         UPDATE clients 
+         SET 
+           preferred_service = COALESCE($1, preferred_service),
+           preferred_barber_name = COALESCE($2, preferred_barber_name),
+           preferred_barber_phone = COALESCE($3, preferred_barber_phone),
+           notes = COALESCE($4, notes),
+           updated_at = CURRENT_TIMESTAMP
+         WHERE id = $5
+       `, [preferred_service, preferred_barber_name, preferred_barber_phone, notes, id]);
 
     if (result.changes === 0) {
       return res.status(400).json({
@@ -218,10 +218,10 @@ router.put('/:id/preferences', async (req, res) => {
       });
     }
 
-    // Get updated client
-    const updatedClient = await getRow(`
-      SELECT * FROM clients WHERE id = ?
-    `, [id]);
+         // Get updated client
+     const updatedClient = await getRow(`
+       SELECT * FROM clients WHERE id = $1
+     `, [id]);
 
     console.log(`👤 Updated client preferences: ${updatedClient.name} (${updatedClient.phone})`);
 
@@ -242,18 +242,18 @@ router.put('/:id/preferences', async (req, res) => {
 });
 
 // Get client statistics
-router.get('/stats/summary', async (req, res) => {
-  try {
-    const stats = await getRow(`
-      SELECT 
-        COUNT(*) as total_clients,
-        COUNT(CASE WHEN total_bookings > 1 THEN 1 END) as returning_clients,
-        COUNT(CASE WHEN total_bookings = 1 THEN 1 END) as new_clients,
-        AVG(total_bookings) as average_bookings_per_client,
-        SUM(total_spent) as total_revenue_from_clients
-      FROM clients
-      WHERE is_active = 1
-    `);
+    router.get('/stats/summary', async (req, res) => {
+      try {
+        const stats = await getRow(`
+          SELECT 
+            COUNT(*) as total_clients,
+            COUNT(CASE WHEN total_bookings > 1 THEN 1 END) as returning_clients,
+            COUNT(CASE WHEN total_bookings = 1 THEN 1 END) as new_clients,
+            AVG(total_bookings) as average_bookings_per_client,
+            SUM(total_spent) as total_revenue_from_clients
+          FROM clients
+          WHERE is_active = true
+        `);
 
     // Get top clients by bookings
     const topClients = await getAll(`
@@ -265,8 +265,8 @@ router.get('/stats/summary', async (req, res) => {
         favorite_service,
         last_booking_date
       FROM clients
-      WHERE is_active = 1
-      ORDER BY total_bookings DESC, total_spent DESC
+             WHERE is_active = true
+       ORDER BY total_bookings DESC, total_spent DESC
       LIMIT 10
     `);
 
@@ -276,8 +276,8 @@ router.get('/stats/summary', async (req, res) => {
         favorite_service,
         COUNT(*) as client_count
       FROM clients
-      WHERE is_active = 1 AND favorite_service IS NOT NULL
-      GROUP BY favorite_service
+             WHERE is_active = true AND favorite_service IS NOT NULL
+       GROUP BY favorite_service
       ORDER BY client_count DESC
     `);
 
@@ -313,9 +313,9 @@ router.get('/search/:query', async (req, res) => {
         MAX(b.created_at) as last_booking_date
       FROM clients c
       LEFT JOIN bookings b ON c.phone = b.customer_phone
-      WHERE c.is_active = 1 
-        AND (c.name LIKE ? OR c.phone LIKE ? OR c.email LIKE ?)
-      GROUP BY c.id
+             WHERE c.is_active = true 
+         AND (c.name LIKE $1 OR c.phone LIKE $2 OR c.email LIKE $3)
+       GROUP BY c.id
       ORDER BY c.total_bookings DESC
       LIMIT 20
     `, [searchQuery, searchQuery, searchQuery]);

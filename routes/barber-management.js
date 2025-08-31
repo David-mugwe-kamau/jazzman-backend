@@ -186,7 +186,7 @@ router.post('/', upload.single('passport_photo'), async (req, res) => {
 
     // Check if phone or identity badge already exists
     const existingBarber = await getRow(
-      'SELECT id FROM barbers WHERE phone = ? OR identity_badge_number = ?',
+      'SELECT id FROM barbers WHERE phone = $1 OR identity_badge_number = $2',
       [phone, identity_badge_number]
     );
 
@@ -213,11 +213,11 @@ router.post('/', upload.single('passport_photo'), async (req, res) => {
       INSERT INTO barbers (
         name, phone, email, passport_photo, identity_badge_number,
         current_location, total_services, total_earnings, is_active
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `, [name, phone, email, passportPhotoPath, identity_badge_number, current_location, servicesCount, earningsAmount, activeStatus]);
 
     // Get the created barber
-    const newBarber = await getRow('SELECT * FROM barbers WHERE id = ?', [result.id]);
+    const newBarber = await getRow('SELECT * FROM barbers WHERE id = $1', [result.id]);
 
     res.status(201).json({
       success: true,
@@ -251,7 +251,7 @@ router.put('/:id', upload.single('profile_photo'), async (req, res) => {
     } = req.body;
 
     // Check if barber exists
-    const existingBarber = await getRow('SELECT * FROM barbers WHERE id = ?', [id]);
+    const existingBarber = await getRow('SELECT * FROM barbers WHERE id = $1', [id]);
     if (!existingBarber) {
       return res.status(404).json({
         success: false,
