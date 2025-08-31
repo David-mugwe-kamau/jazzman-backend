@@ -117,7 +117,7 @@ async function initializePostgresTables() {
         customer_phone TEXT,
         address TEXT NOT NULL,
         location_notes TEXT,
-        preferred_datetime TEXT NOT NULL,
+        preferred_datetime TIMESTAMP NOT NULL,
         service_type TEXT NOT NULL,
         service_price REAL NOT NULL,
         barber_id INTEGER,
@@ -372,6 +372,49 @@ async function runDatabaseMigrations() {
       }
     } catch (error) {
       console.log('ℹ️ Column addition migration skipped:', error.message);
+    }
+    
+    // Fix preferred_datetime column type if it's TEXT instead of TIMESTAMP
+    try {
+      const datetimeCheck = await runQuery(`
+        SELECT data_type 
+        FROM information_schema.columns 
+        WHERE table_name = 'bookings' AND column_name = 'preferred_datetime'
+      `);
+      
+      if (datetimeCheck && datetimeCheck.length > 0 && datetimeCheck[0].data_type === 'text') {
+        console.log('🔄 Converting preferred_datetime from TEXT to TIMESTAMP...');
+        
+        // First, add a temporary column
+        await runQuery(`
+          ALTER TABLE bookings 
+          ADD COLUMN preferred_datetime_new TIMESTAMP
+        `);
+        
+        // Convert existing data
+        await runQuery(`
+          UPDATE bookings 
+          SET preferred_datetime_new = preferred_datetime::timestamp
+          WHERE preferred_datetime IS NOT NULL
+        `);
+        
+        // Drop the old column and rename the new one
+        await runQuery(`
+          ALTER TABLE bookings 
+          DROP COLUMN preferred_datetime
+        `);
+        
+        await runQuery(`
+          ALTER TABLE bookings 
+          RENAME COLUMN preferred_datetime_new TO preferred_datetime
+        `);
+        
+        console.log('✅ preferred_datetime column converted to TIMESTAMP');
+      } else {
+        console.log('ℹ️ preferred_datetime column already has correct type');
+      }
+    } catch (error) {
+      console.log('ℹ️ preferred_datetime migration skipped:', error.message);
     }
     
     console.log('✅ Database migrations completed');
