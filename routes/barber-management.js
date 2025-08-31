@@ -135,7 +135,7 @@ router.get('/:id', async (req, res) => {
         total_services, total_earnings, current_location,
         last_active, created_at
       FROM barbers 
-      WHERE id = ?
+      WHERE id = $1
     `, [id]);
     
     if (!barber) {
@@ -407,7 +407,7 @@ router.get('/:id/stats', async (req, res) => {
         SUM(CASE WHEN bk.status = 'completed' THEN bk.service_price ELSE 0 END) as total_revenue
       FROM barbers b
       LEFT JOIN bookings bk ON b.id = bk.barber_id
-      WHERE b.id = ?
+      WHERE b.id = $1
       GROUP BY b.id
     `, [id]);
 
