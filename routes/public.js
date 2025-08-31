@@ -5,7 +5,7 @@ const router = express.Router();
 // Get all active services
 router.get('/services', async (req, res) => {
   try {
-    const services = await getAll('SELECT * FROM services WHERE is_active = 1 ORDER BY price ASC');
+    const services = await getAll('SELECT * FROM services WHERE is_active = true ORDER BY price ASC');
     
     res.json({
       success: true,
@@ -24,7 +24,7 @@ router.get('/services', async (req, res) => {
 // Get all active barbers
 router.get('/barbers', async (req, res) => {
   try {
-    const barbers = await getAll('SELECT * FROM barbers WHERE is_active = 1 AND is_blocked = 0 ORDER BY name ASC');
+    const barbers = await getAll('SELECT * FROM barbers WHERE is_active = true AND is_blocked = false ORDER BY name ASC');
     
     res.json({
       success: true,
@@ -46,7 +46,7 @@ router.get('/services/:id', async (req, res) => {
     const { id } = req.params;
     const { getRow } = require('../config/database');
     
-    const service = await getRow('SELECT * FROM services WHERE id = ? AND is_active = 1', [id]);
+    const service = await getRow('SELECT * FROM services WHERE id = $1 AND is_active = true', [id]);
     
     if (!service) {
       return res.status(404).json({
@@ -75,7 +75,7 @@ router.get('/barbers/:id', async (req, res) => {
     const { id } = req.params;
     const { getRow } = require('../config/database');
     
-    const barber = await getRow('SELECT * FROM barbers WHERE id = ? AND is_active = 1', [id]);
+    const barber = await getRow('SELECT * FROM barbers WHERE id = $1 AND is_active = true', [id]);
     
     if (!barber) {
       return res.status(404).json({

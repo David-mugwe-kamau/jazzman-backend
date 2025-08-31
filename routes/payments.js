@@ -87,7 +87,7 @@ router.post('/', validatePayment, async (req, res) => {
         FROM bookings b
         LEFT JOIN services s ON b.service_type = s.name
         LEFT JOIN barbers br ON b.barber_id = br.id
-        WHERE b.id = ? AND b.payment_status = 'unpaid'
+        WHERE b.id = $1 AND b.payment_status = 'unpaid'
       `, [booking_id]);
       console.log('🔍 Payment API: Database query result:', booking);
     } catch (dbError) {
@@ -164,7 +164,7 @@ router.post('/', validatePayment, async (req, res) => {
       INSERT INTO payments (
         booking_id, amount, payment_method, transaction_id, 
         status, receipt_sent, created_at
-      ) VALUES (?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)
+      ) VALUES ($1, $2, $3, $4, $5, 0, CURRENT_TIMESTAMP)
     `, [booking_id, amount, payment_method, transaction_id, payment_status]);
     
     console.log('🔍 Payment API: Payment record created successfully:', paymentResult);
@@ -176,7 +176,7 @@ router.post('/', validatePayment, async (req, res) => {
     
     await runQuery(`
       UPDATE bookings SET 
-        payment_status = ?, 
+        payment_status = $1, 
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `, [payment_status, booking_id]);
@@ -198,13 +198,13 @@ router.post('/', validatePayment, async (req, res) => {
         // Update booking with assigned barber
         await runQuery(`
           UPDATE bookings SET 
-            barber_id = ?, 
-            barber_name = ?, 
-            barber_phone = ?, 
-            barber_identity_badge = ?,
+            barber_id = $1, 
+            barber_name = $2, 
+            barber_phone = $3, 
+            barber_identity_badge = $4,
             status = 'in_progress',
             updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
+          WHERE id = $2
         `, [
           assignedBarber.id,
           assignedBarber.name,
@@ -227,7 +227,7 @@ router.post('/', validatePayment, async (req, res) => {
     }
 
     // Get updated payment record
-    const payment = await getRow('SELECT * FROM payments WHERE id = ?', [paymentResult.id]);
+    const payment = await getRow('SELECT * FROM payments WHERE id = $1', [paymentResult.id]);
 
     // Send receipt if payment is successful
     if (payment_status === 'completed') {
@@ -235,7 +235,7 @@ router.post('/', validatePayment, async (req, res) => {
         await sendPaymentReceipt(booking, payment, assignedBarber);
         
         // Mark receipt as sent
-        await runQuery('UPDATE payments SET receipt_sent = 1 WHERE id = ?', [paymentResult.id]);
+        await runQuery('UPDATE payments SET receipt_sent = true WHERE id = $1', [paymentResult.id]);
       } catch (error) {
         console.error('Error sending receipt:', error);
         // Don't fail the payment if receipt sending fails
@@ -279,7 +279,7 @@ router.get('/:id', async (req, res) => {
         b.address
       FROM payments p
       JOIN bookings b ON p.booking_id = b.id
-      WHERE p.id = ?
+      WHERE p.id = $1
     `, [id]);
 
     if (!payment) {
@@ -320,22 +320,22 @@ router.get('/', async (req, res) => {
     const params = [];
 
     if (status) {
-      whereClause += ' AND p.status = ?';
+      whereClause += ' AND p.status = $' + (params.length + 1);
       params.push(status);
     }
 
     if (payment_method) {
-      whereClause += ' AND p.payment_method = ?';
+      whereClause += ' AND p.payment_method = $' + (params.length + 1);
       params.push(payment_method);
     }
 
     if (start_date) {
-      whereClause += ' AND DATE(p.created_at) >= ?';
+      whereClause += ' AND DATE(p.created_at) >= $' + (params.length + 1);
       params.push(start_date);
     }
 
     if (end_date) {
-      whereClause += ' AND DATE(p.created_at) <= ?';
+      whereClause += ' AND DATE(p.created_at) <= $' + (params.length + 1);
       params.push(end_date);
     }
 
@@ -351,7 +351,7 @@ router.get('/', async (req, res) => {
       JOIN bookings b ON p.booking_id = b.id
       ${whereClause}
       ORDER BY p.created_at DESC
-      LIMIT ? OFFSET ?
+      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `, [...params, parseInt(limit), parseInt(offset)]);
 
     // Get total count for pagination
@@ -463,7 +463,7 @@ router.post('/:id/resend-receipt', async (req, res) => {
       FROM payments p
       JOIN bookings b ON p.booking_id = b.id
       LEFT JOIN barbers br ON b.barber_id = br.id
-      WHERE p.id = ? AND p.status = 'completed'
+      WHERE p.id = $1 AND p.status = 'completed'
     `, [id]);
 
     if (!payment) {
@@ -481,7 +481,7 @@ router.post('/:id/resend-receipt', async (req, res) => {
     });
 
     // Update receipt sent status
-    await runQuery('UPDATE payments SET receipt_sent = 1 WHERE id = ?', [id]);
+    await runQuery('UPDATE payments SET receipt_sent = true WHERE id = $1', [id]);
 
     res.json({
       success: true,

@@ -94,7 +94,7 @@ router.get('/:id', async (req, res) => {
       FROM payments p
       JOIN bookings b ON p.booking_id = b.id
       LEFT JOIN barbers br ON b.barber_id = br.id
-      WHERE p.id = ?
+      WHERE p.id = $1
     `, [id]);
 
     if (!payment) {
@@ -133,7 +133,7 @@ router.put('/:id/mark-received', async (req, res) => {
       FROM payments p
       JOIN bookings b ON p.booking_id = b.id
       LEFT JOIN barbers br ON b.barber_id = br.id
-      WHERE p.id = ?
+      WHERE p.id = $1
     `, [id]);
 
     if (!currentPayment) {
@@ -156,9 +156,9 @@ router.put('/:id/mark-received', async (req, res) => {
       SET 
         status = 'received',
         payment_received_at = CURRENT_TIMESTAMP,
-        payment_notes = ?,
-        payment_method_used = ?
-      WHERE id = ?
+        payment_notes = $1,
+        payment_method_used = $2
+      WHERE id = $3
     `, [payment_notes || null, payment_method_used || currentPayment.payment_method, id]);
 
     if (result.changes === 0) {
@@ -190,7 +190,7 @@ router.put('/:id/mark-received', async (req, res) => {
       FROM payments p
       JOIN bookings b ON p.booking_id = b.id
       LEFT JOIN barbers br ON b.barber_id = br.id
-      WHERE p.id = ?
+      WHERE p.id = $1
     `, [id]);
 
     console.log(`💰 Payment marked as received: Booking #${currentPayment.booking_id} - ${currentPayment.customer_name} paid ${currentPayment.barber_name} KES ${currentPayment.amount}`);
@@ -230,7 +230,7 @@ router.put('/:id/mark-pending', async (req, res) => {
       FROM payments p
       JOIN bookings b ON p.booking_id = b.id
       LEFT JOIN barbers br ON b.barber_id = br.id
-      WHERE p.id = ?
+      WHERE p.id = $1
     `, [id]);
 
     if (!currentPayment) {
@@ -254,10 +254,10 @@ router.put('/:id/mark-pending', async (req, res) => {
         status = 'pending',
         payment_received_at = NULL,
         payment_notes = CASE 
-          WHEN ? IS NOT NULL THEN ?
+          WHEN $1 IS NOT NULL THEN $2
           ELSE payment_notes
         END
-      WHERE id = ?
+      WHERE id = $3
     `, [reason, reason, id]);
 
     if (result.changes === 0) {

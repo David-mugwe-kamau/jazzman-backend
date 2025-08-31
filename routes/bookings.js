@@ -64,12 +64,12 @@ router.post('/', validateBooking, async (req, res) => {
         status NOT IN ('cancelled', 'completed', 'no_show')
         AND (
           -- Same time slot (exact match)
-          preferred_datetime = ? 
+          preferred_datetime = $1 
           OR 
           -- Overlapping time slots (1 hour service + 1 hour travel buffer)
           (
             preferred_datetime BETWEEN 
-              datetime(?, '-2 hours') AND datetime(?, '+2 hours')
+              $2::timestamp - INTERVAL '2 hours' AND $3::timestamp + INTERVAL '2 hours'
           )
         )
       LIMIT 1
@@ -97,8 +97,8 @@ router.post('/', validateBooking, async (req, res) => {
         id, service_type, preferred_datetime, status
       FROM bookings 
       WHERE 
-        customer_phone = ? 
-        AND DATE(preferred_datetime) = DATE(?)
+        customer_phone = $1 
+        AND DATE(preferred_datetime) = DATE($2)
         AND status NOT IN ('cancelled', 'completed', 'no_show')
       LIMIT 1
     `, [customer_phone, preferred_datetime]);
@@ -154,7 +154,7 @@ router.post('/', validateBooking, async (req, res) => {
       const preferredBarber = await getRow(`
         SELECT id, name, phone, identity_badge_number, total_services, last_active, COALESCE(profile_photo, '') as profile_photo
         FROM barbers 
-        WHERE name = ? AND phone = ? AND is_active = 1 AND is_blocked = 0
+        WHERE name = $1 AND phone = $2 AND is_active = true AND is_blocked = false
       `, [preferred_barber_name, preferred_barber_phone]);
       
       if (preferredBarber) {
@@ -174,7 +174,7 @@ router.post('/', validateBooking, async (req, res) => {
           total_services, last_active, COALESCE(profile_photo, '') as profile_photo,
           is_active, is_blocked
         FROM barbers 
-        WHERE is_active = 1 AND is_blocked = 0 
+        WHERE is_active = true AND is_blocked = false 
         ORDER BY 
           CASE name
             WHEN 'David' THEN 1
@@ -198,7 +198,7 @@ router.post('/', validateBooking, async (req, res) => {
       const totalBookingsToday = await getRow(`
         SELECT COUNT(*) as count 
         FROM bookings 
-        WHERE DATE(created_at) = DATE('now') 
+        WHERE DATE(created_at) = CURRENT_DATE 
         AND status != 'cancelled'
       `);
       
@@ -217,16 +217,16 @@ router.post('/', validateBooking, async (req, res) => {
         preferred_datetime, status
       FROM bookings 
       WHERE 
-        barber_id = ? 
+        barber_id = $1 
         AND status NOT IN ('cancelled', 'completed', 'no_show')
         AND (
           -- Same time slot (exact match)
-          preferred_datetime = ? 
+          preferred_datetime = $2 
           OR 
           -- Overlapping time slots for the same barber (1 hour service + 1 hour travel buffer)
           (
             preferred_datetime BETWEEN 
-              datetime(?, '-2 hours') AND datetime(?, '+2 hours')
+              $3::timestamp - INTERVAL '2 hours' AND $4::timestamp + INTERVAL '2 hours'
           )
         )
       LIMIT 1
@@ -253,7 +253,7 @@ router.post('/', validateBooking, async (req, res) => {
         customer_name, customer_email, customer_phone, address, 
         location_notes, preferred_datetime, service_type, service_price, 
         barber_id, barber_name, barber_phone, barber_identity_badge, notes, payment_method, mpesa_phone
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
     `, [
       customer_name, customer_email, customer_phone, address,
       req.body.location_notes, preferred_datetime, service_type, service_price,
@@ -262,7 +262,7 @@ router.post('/', validateBooking, async (req, res) => {
     ]);
 
     // Get the created booking
-    const booking = await getRow('SELECT * FROM bookings WHERE id = ?', [result.id]);
+    const booking = await getRow('SELECT * FROM bookings WHERE id = $1', [result.id]);
 
     // Send barber assignment notification
     try {
@@ -316,17 +316,17 @@ router.get('/', async (req, res) => {
 
     // Add filters
     if (status) {
-      sql += ' AND status = ?';
+      sql += ' AND status = $' + (params.length + 1);
       params.push(status);
     }
     
     if (barber) {
-      sql += ' AND barber_name = ?';
+      sql += ' AND barber_name = $' + (params.length + 1);
       params.push(barber);
     }
     
     if (date) {
-      sql += ' AND DATE(preferred_datetime) = DATE(?)';
+      sql += ' AND DATE(preferred_datetime) = DATE($' + (params.length + 1) + ')';
       params.push(date);
     }
 
@@ -453,7 +453,7 @@ router.post('/:id/cancel', [
     const { cancellation_reason, cancelled_by } = req.body;
 
     // Check if booking exists and can be cancelled
-    const existingBooking = await getRow('SELECT * FROM bookings WHERE id = ?', [id]);
+    const existingBooking = await getRow('SELECT * FROM bookings WHERE id = $1', [id]);
     if (!existingBooking) {
       return res.status(404).json({
         success: false,
@@ -479,15 +479,15 @@ router.post('/:id/cancel', [
     await runQuery(`
       UPDATE bookings 
       SET status = 'cancelled', 
-          cancellation_reason = ?, 
+          cancellation_reason = $1, 
           cancelled_at = CURRENT_TIMESTAMP, 
-          cancelled_by = ?,
+          cancelled_by = $2,
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
+      WHERE id = $3
     `, [cancellation_reason, cancelled_by, id]);
 
     // Get updated booking
-    const updatedBooking = await getRow('SELECT * FROM bookings WHERE id = ?', [id]);
+    const updatedBooking = await getRow('SELECT * FROM bookings WHERE id = $1', [id]);
 
     // Log the cancellation for barber notification
     console.log(`📱 BARBER NOTIFICATION NEEDED:`);
@@ -507,7 +507,7 @@ router.post('/:id/cancel', [
       const barber = await getRow(`
         SELECT id, name, phone, email, identity_badge_number
         FROM barbers 
-        WHERE id = ?
+        WHERE id = $1
       `, [updatedBooking.barber_id]);
       
       if (barber && barber.email) {
@@ -662,7 +662,7 @@ router.patch('/:id', [
     const updates = req.body;
     
     // Check if booking exists
-    const existingBooking = await getRow('SELECT * FROM bookings WHERE id = ?', [id]);
+    const existingBooking = await getRow('SELECT * FROM bookings WHERE id = $1', [id]);
     if (!existingBooking) {
       return res.status(404).json({
         success: false,
@@ -689,7 +689,7 @@ router.patch('/:id', [
     
     Object.keys(updates).forEach(key => {
       if (updates[key] !== undefined && updates[key] !== null) {
-        updateFields.push(`${key} = ?`);
+        updateFields.push(`${key} = $` + (updateValues.length + 1));
         updateValues.push(updates[key]);
       }
     });
@@ -704,12 +704,12 @@ router.patch('/:id', [
     updateFields.push('updated_at = CURRENT_TIMESTAMP');
     updateValues.push(id);
     
-    const updateQuery = `UPDATE bookings SET ${updateFields.join(', ')} WHERE id = ?`;
+    const updateQuery = `UPDATE bookings SET ${updateFields.join(', ')} WHERE id = $` + (updateValues.length + 1);
     
     await runQuery(updateQuery, updateValues);
     
     // Get updated booking
-    const updatedBooking = await getRow('SELECT * FROM bookings WHERE id = ?', [id]);
+    const updatedBooking = await getRow('SELECT * FROM bookings WHERE id = $1', [id]);
     
     res.json({
       success: true,

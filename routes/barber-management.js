@@ -261,7 +261,7 @@ router.put('/:id', upload.single('profile_photo'), async (req, res) => {
 
     // Check if phone or identity badge conflicts with other barbers
     const conflictCheck = await getRow(
-      'SELECT id FROM barbers WHERE (phone = ? OR identity_badge_number = ?) AND id != ?',
+      'SELECT id FROM barbers WHERE (phone = $1 OR identity_badge_number = $2) AND id != $3',
       [phone, identity_badge_number, id]
     );
 
@@ -288,16 +288,16 @@ router.put('/:id', upload.single('profile_photo'), async (req, res) => {
     // Update barber
     await runQuery(`
       UPDATE barbers SET 
-        name = ?, phone = ?, email = ?, profile_photo = ?,
-        identity_badge_number = ?, is_active = ?, 
-        total_services = ?, total_earnings = ?, current_location = ?,
+        name = $1, phone = $2, email = $3, profile_photo = $4,
+        identity_badge_number = $5, is_active = $6, 
+        total_services = $7, total_earnings = $8, current_location = $9,
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
+      WHERE id = $10
     `, [name, phone, email, profilePhotoPath, identity_badge_number, is_active, 
         total_services || 0, total_earnings || 0, current_location || '', id]);
 
     // Get updated barber
-    const updatedBarber = await getRow('SELECT * FROM barbers WHERE id = ?', [id]);
+    const updatedBarber = await getRow('SELECT * FROM barbers WHERE id = $1', [id]);
 
     res.json({
       success: true,
@@ -321,7 +321,7 @@ router.delete('/:id', async (req, res) => {
     const { id } = req.params;
 
     // Check if barber exists
-    const existingBarber = await getRow('SELECT * FROM barbers WHERE id = ?', [id]);
+    const existingBarber = await getRow('SELECT * FROM barbers WHERE id = $1', [id]);
     if (!existingBarber) {
       return res.status(404).json({
         success: false,
@@ -331,7 +331,7 @@ router.delete('/:id', async (req, res) => {
 
     // Check if barber has active bookings
     const activeBookings = await getRow(
-      'SELECT id FROM bookings WHERE barber_id = ? AND status IN ("pending", "in_progress")',
+      'SELECT id FROM bookings WHERE barber_id = $1 AND status IN (\'pending\', \'in_progress\')',
       [id]
     );
 
@@ -351,7 +351,7 @@ router.delete('/:id', async (req, res) => {
     }
 
     // Delete barber
-    await runQuery('DELETE FROM barbers WHERE id = ?', [id]);
+    await runQuery('DELETE FROM barbers WHERE id = $1', [id]);
 
     res.json({
       success: true,
@@ -431,7 +431,7 @@ router.post('/:id/block', async (req, res) => {
     }
 
     // Check if barber exists
-    const barber = await getRow('SELECT id, is_blocked FROM barbers WHERE id = ?', [id]);
+    const barber = await getRow('SELECT id, is_blocked FROM barbers WHERE id = $1', [id]);
     if (!barber) {
       return res.status(404).json({
         success: false,
@@ -455,16 +455,16 @@ router.post('/:id/block', async (req, res) => {
     // Block the barber
     await runQuery(`
       UPDATE barbers SET 
-        is_blocked = 1,
-        block_reason = ?,
+        is_blocked = true,
+        block_reason = $1,
         blocked_at = CURRENT_TIMESTAMP,
-        blocked_by = ?,
-        block_type = ?,
-        block_duration_hours = ?,
-        block_expires_at = ?,
-        block_category = ?,
-        block_severity = ?
-      WHERE id = ?
+        blocked_by = $2,
+        block_type = $3,
+        block_duration_hours = $4,
+        block_expires_at = $5,
+        block_category = $6,
+        block_severity = $7
+      WHERE id = $8
     `, [block_reason, blocked_by || 1, block_type || 'permanent', block_duration_hours || null, block_expires_at, block_category || 'Policy Violation', block_severity || 'suspension', id]);
 
     // Send notification after successful blocking
@@ -496,7 +496,7 @@ router.post('/:id/unblock', async (req, res) => {
     const { id } = req.params;
 
     // Check if barber exists
-    const barber = await getRow('SELECT id, is_blocked FROM barbers WHERE id = ?', [id]);
+    const barber = await getRow('SELECT id, is_blocked FROM barbers WHERE id = $1', [id]);
     if (!barber) {
       return res.status(404).json({
         success: false,
@@ -514,7 +514,7 @@ router.post('/:id/unblock', async (req, res) => {
     // Unblock the barber
     await runQuery(`
       UPDATE barbers SET 
-        is_blocked = 0,
+        is_blocked = false,
         block_reason = NULL,
         blocked_at = NULL,
         blocked_by = NULL,
@@ -523,7 +523,7 @@ router.post('/:id/unblock', async (req, res) => {
         block_expires_at = NULL,
         block_category = NULL,
         block_severity = NULL
-      WHERE id = ?
+      WHERE id = $1
     `, [id]);
 
     res.json({
@@ -549,7 +549,7 @@ router.post('/check-expired-blocks', async (req, res) => {
     const expiredBlocks = await getAll(`
       SELECT id, name, block_expires_at 
       FROM barbers 
-      WHERE is_blocked = 1 
+      WHERE is_blocked = true 
         AND block_type = 'temporary' 
         AND block_expires_at IS NOT NULL 
         AND block_expires_at < CURRENT_TIMESTAMP
@@ -566,14 +566,14 @@ router.post('/check-expired-blocks', async (req, res) => {
     // Unblock expired barbers
     await runQuery(`
       UPDATE barbers SET 
-        is_blocked = 0,
+        is_blocked = false,
         block_reason = NULL,
         blocked_at = NULL,
         blocked_by = NULL,
         block_type = NULL,
         block_duration_hours = NULL,
         block_expires_at = NULL
-      WHERE is_blocked = 1 
+      WHERE is_blocked = true 
         AND block_type = 'temporary' 
         AND block_expires_at < CURRENT_TIMESTAMP
     `);
@@ -603,7 +603,7 @@ router.post('/:id/photo', upload.single('profile_photo'), async (req, res) => {
     const { id } = req.params;
 
     // Check if barber exists
-    const existingBarber = await getRow('SELECT * FROM barbers WHERE id = ?', [id]);
+    const existingBarber = await getRow('SELECT * FROM barbers WHERE id = $1', [id]);
     if (!existingBarber) {
       return res.status(404).json({
         success: false,
@@ -631,13 +631,13 @@ router.post('/:id/photo', upload.single('profile_photo'), async (req, res) => {
     
     await runQuery(`
       UPDATE barbers SET 
-        profile_photo = ?,
+        profile_photo = $1,
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
+      WHERE id = $2
     `, [profilePhotoPath, id]);
 
     // Get updated barber
-    const updatedBarber = await getRow('SELECT * FROM barbers WHERE id = ?', [id]);
+    const updatedBarber = await getRow('SELECT * FROM barbers WHERE id = $1', [id]);
 
     res.json({
       success: true,
