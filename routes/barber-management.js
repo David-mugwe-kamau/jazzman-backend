@@ -204,7 +204,7 @@ router.post('/', upload.single('passport_photo'), async (req, res) => {
     }
 
     // Set default values for optional fields
-    const activeStatus = is_active ? parseInt(is_active) : 1;
+    const activeStatus = is_active === 'true' || is_active === true;
     const servicesCount = total_services ? parseInt(total_services) : 0;
     const earningsAmount = total_earnings ? parseFloat(total_earnings) : 0.0;
 

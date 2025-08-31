@@ -551,7 +551,6 @@ async function getTopServices(startDate, endDate) {
     GROUP BY service_type
     ORDER BY revenue DESC
     LIMIT 5
-    LIMIT 5
   `, [startDate, endDate]);
 }
 
