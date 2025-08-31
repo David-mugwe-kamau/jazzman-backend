@@ -6,6 +6,21 @@ const { runQuery, getRow, getAll } = require('../config/database');
 const { sendBlockNotification } = require('../utils/block-notifications');
 const router = express.Router();
 
+// Utility function to normalize profile photo paths
+function normalizeProfilePhotoPath(photoPath) {
+  if (!photoPath) return null;
+  
+  // Convert any passport_photo references to profile_photo
+  let normalizedPath = photoPath.replace('/uploads/passports/', '/uploads/profiles/');
+  
+  // Ensure the path starts with /uploads/profiles/
+  if (normalizedPath && !normalizedPath.startsWith('/uploads/profiles/')) {
+    normalizedPath = `/uploads/profiles/${path.basename(normalizedPath)}`;
+  }
+  
+  return normalizedPath;
+}
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -83,6 +98,11 @@ router.get('/all', async (req, res) => {
       ORDER BY name ASC
     `);
     
+    // Normalize profile photo paths for all barbers
+    barbers.forEach(barber => {
+      barber.profile_photo = normalizeProfilePhotoPath(barber.profile_photo);
+    });
+    
     console.log(`📊 Database returned ${barbers.length} barbers:`, barbers.map(b => ({ id: b.id, name: b.name, is_blocked: b.is_blocked, block_type: b.block_type })));
     
     res.json({
@@ -144,6 +164,9 @@ router.get('/:id', async (req, res) => {
         message: 'Barber not found'
       });
     }
+
+    // Normalize profile photo path
+    barber.profile_photo = normalizeProfilePhotoPath(barber.profile_photo);
 
     res.json({
       success: true,

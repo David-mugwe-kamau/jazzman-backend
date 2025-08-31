@@ -296,6 +296,9 @@ async function initializePostgresTables() {
     
     console.log('✅ Working hours table ready');
 
+    // Run database migrations for existing deployments
+    await runDatabaseMigrations();
+    
     // Insert default working hours
     await insertDefaultWorkingHoursPostgres();
     
@@ -306,6 +309,103 @@ async function initializePostgresTables() {
 
   } catch (error) {
     console.error('❌ Error initializing PostgreSQL tables:', error);
+  }
+}
+
+// Run database migrations for existing PostgreSQL deployments
+async function runDatabaseMigrations() {
+  try {
+    console.log('🔄 Running database migrations...');
+    
+    // Check if passport_photo column exists and rename it to profile_photo
+    try {
+      const columnCheck = await runQuery(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'barbers' AND column_name = 'passport_photo'
+      `);
+      
+      if (columnCheck && columnCheck.length > 0) {
+        console.log('🔄 Renaming passport_photo column to profile_photo...');
+        await runQuery(`
+          ALTER TABLE barbers 
+          RENAME COLUMN passport_photo TO profile_photo
+        `);
+        console.log('✅ Column renamed successfully');
+      } else {
+        console.log('ℹ️ passport_photo column does not exist, skipping rename');
+      }
+    } catch (error) {
+      console.log('ℹ️ Column rename migration skipped:', error.message);
+    }
+    
+    // Update existing file paths from /uploads/passports/ to /uploads/profiles/
+    try {
+      console.log('🔄 Updating file paths in existing records...');
+      const result = await runQuery(`
+        UPDATE barbers 
+        SET profile_photo = REPLACE(profile_photo, '/uploads/passports/', '/uploads/profiles/')
+        WHERE profile_photo LIKE '/uploads/passports/%'
+      `);
+      console.log(`✅ Updated ${result.rowCount || 0} file paths`);
+    } catch (error) {
+      console.log('ℹ️ File path update migration skipped:', error.message);
+    }
+    
+    // Ensure the profile_photo column exists with correct type
+    try {
+      const profilePhotoCheck = await runQuery(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'barbers' AND column_name = 'profile_photo'
+      `);
+      
+      if (!profilePhotoCheck || profilePhotoCheck.length === 0) {
+        console.log('🔄 Adding profile_photo column...');
+        await runQuery(`
+          ALTER TABLE barbers 
+          ADD COLUMN profile_photo TEXT
+        `);
+        console.log('✅ profile_photo column added');
+      } else {
+        console.log('ℹ️ profile_photo column already exists');
+      }
+    } catch (error) {
+      console.log('ℹ️ Column addition migration skipped:', error.message);
+    }
+    
+    console.log('✅ Database migrations completed');
+    
+    // Ensure uploads directories exist
+    await ensureUploadsDirectories();
+  } catch (error) {
+    console.error('❌ Error running migrations:', error);
+  }
+}
+
+// Ensure uploads directories exist
+async function ensureUploadsDirectories() {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    
+    const uploadsDir = path.join(__dirname, '../public/uploads');
+    const profilesDir = path.join(uploadsDir, 'profiles');
+    
+    // Create directories if they don't exist
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+      console.log('✅ Created uploads directory');
+    }
+    
+    if (!fs.existsSync(profilesDir)) {
+      fs.mkdirSync(profilesDir, { recursive: true });
+      console.log('✅ Created profiles directory');
+    }
+    
+    console.log('✅ Upload directories ready');
+  } catch (error) {
+    console.error('❌ Error creating upload directories:', error);
   }
 }
 
