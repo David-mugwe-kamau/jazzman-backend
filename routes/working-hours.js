@@ -1,5 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
+const { runQuery } = require('../config/database');
 const workingHoursManager = require('../utils/working-hours');
 const router = express.Router();
 
@@ -141,6 +142,19 @@ router.put('/:dayOfWeek', [
     
     // Break time validation removed
     
+    // Check if the working_hours table exists and has the right structure
+    try {
+      const tableCheck = await runQuery(`
+        SELECT column_name, data_type 
+        FROM information_schema.columns 
+        WHERE table_name = 'working_hours' 
+        ORDER BY ordinal_position
+      `);
+      console.log('🔍 Working hours table structure:', tableCheck);
+    } catch (tableError) {
+      console.error('❌ Error checking table structure:', tableError);
+    }
+    
     console.log('🔄 About to call workingHoursManager.updateWorkingHours with:', {
       dayOfWeek: parseInt(dayOfWeek),
       updates
@@ -157,6 +171,13 @@ router.put('/:dayOfWeek', [
     });
   } catch (error) {
     console.error('❌ Error updating working hours:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      detail: error.detail,
+      constraint: error.constraint
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to update working hours',
