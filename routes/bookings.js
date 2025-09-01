@@ -256,6 +256,7 @@ router.post('/', validateBooking, async (req, res) => {
         location_notes, preferred_datetime, service_type, service_price, 
         barber_id, barber_name, barber_phone, barber_identity_badge, notes, payment_method, mpesa_phone
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      RETURNING id
     `, [
       customer_name, customer_email, customer_phone, address,
       req.body.location_notes, preferred_datetime, service_type, service_price,
@@ -263,8 +264,19 @@ router.post('/', validateBooking, async (req, res) => {
       notes, req.body.payment_method, req.body.mpesa_phone
     ]);
 
+    console.log('🔍 Insert result:', result);
+
     // Get the created booking
     const booking = await getRow('SELECT * FROM bookings WHERE id = $1', [result.id]);
+    
+    if (!booking) {
+      console.error('❌ Failed to retrieve created booking with ID:', result.id);
+      return res.status(500).json({
+        success: false,
+        message: 'Booking created but failed to retrieve details',
+        error: 'Could not retrieve created booking'
+      });
+    }
 
     // Send barber assignment notification
     try {
@@ -299,11 +311,15 @@ router.post('/', validateBooking, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error creating booking:', error);
+    console.error('❌ Error creating booking:', error);
+    console.error('❌ Error stack:', error.stack);
+    console.error('❌ Request body:', req.body);
+    
     res.status(500).json({
       success: false,
       message: 'Failed to create booking',
-      error: error.message
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });

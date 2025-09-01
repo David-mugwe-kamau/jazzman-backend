@@ -20,7 +20,9 @@ if (isProduction) {
   runQuery = async (sql, params = []) => {
     try {
       const result = await pool.query(sql, params);
-      return { id: result.rows[0]?.id, changes: result.rowCount };
+      // For INSERT queries, return the first row's id if available
+      const id = result.rows && result.rows.length > 0 ? result.rows[0].id : null;
+      return { id: id, changes: result.rowCount };
     } catch (error) {
       throw error;
     }
