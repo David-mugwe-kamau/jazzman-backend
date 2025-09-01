@@ -371,12 +371,12 @@ router.post('/', validateBooking, async (req, res) => {
   }
 });
 
-// Get all bookings (with optional filters)
+    // Get all bookings (with optional filters)
 router.get('/', async (req, res) => {
   try {
     const { status, barber, date, limit = 50, offset = 0, show_completed = 'false' } = req.query;
     
-    let sql = 'SELECT * FROM bookings WHERE 1=1';
+    let sql = 'SELECT *, preferred_datetime AT TIME ZONE \'UTC\' AT TIME ZONE \'Africa/Nairobi\' as local_datetime FROM bookings WHERE 1=1';
     const params = [];
 
     // Add filters
@@ -402,18 +402,24 @@ router.get('/', async (req, res) => {
     // }
 
     // Add ordering and pagination
-    sql += ' ORDER BY created_at DESC LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2);
+    sql += ' ORDER BY created_at DESC LIMIT $' + (params.length + 1) + ' OFFSET ' + (params.length + 2);
     params.push(parseInt(limit), parseInt(offset));
 
     const bookings = await getAll(sql, params);
 
+    // Convert datetime to local timezone for display
+    const bookingsWithLocalTime = bookings.map(booking => ({
+      ...booking,
+      preferred_datetime: booking.local_datetime || booking.preferred_datetime
+    }));
+
     res.json({
       success: true,
-      bookings,
+      bookings: bookingsWithLocalTime,
       pagination: {
         limit: parseInt(limit),
         offset: parseInt(offset),
-        count: bookings.length
+        count: bookingsWithLocalTime.length
       }
     });
 
@@ -432,7 +438,12 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    const booking = await getRow('SELECT * FROM bookings WHERE id = $1', [id]);
+    const booking = await getRow(`
+      SELECT *, 
+             preferred_datetime AT TIME ZONE 'UTC' AT TIME ZONE 'Africa/Nairobi' as local_datetime 
+      FROM bookings 
+      WHERE id = $1
+    `, [id]);
     
     if (!booking) {
       return res.status(404).json({
@@ -441,9 +452,15 @@ router.get('/:id', async (req, res) => {
       });
     }
 
+    // Convert datetime to local timezone for display
+    const bookingWithLocalTime = {
+      ...booking,
+      preferred_datetime: booking.local_datetime || booking.preferred_datetime
+    };
+
     res.json({
       success: true,
-      booking
+      booking: bookingWithLocalTime
     });
 
   } catch (error) {
@@ -766,10 +783,10 @@ router.put('/:id', [
       });
     }
 
-    // Update the booking - simplified approach
+    // Update the booking - simplified approach with timezone handling
     const updateQuery = `
       UPDATE bookings 
-      SET preferred_datetime = $1, 
+      SET preferred_datetime = $1::timestamp AT TIME ZONE 'Africa/Nairobi' AT TIME ZONE 'UTC', 
           updated_at = CURRENT_TIMESTAMP 
       WHERE id = $2
       RETURNING *
