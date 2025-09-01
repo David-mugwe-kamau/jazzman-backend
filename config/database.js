@@ -351,13 +351,13 @@ async function runDatabaseMigrations() {
     
     // Fix preferred_datetime column type if it's TEXT instead of TIMESTAMP
     try {
-      const datetimeCheck = await runQuery(`
+      const datetimeCheck = await getRow(`
         SELECT data_type 
         FROM information_schema.columns 
         WHERE table_name = 'bookings' AND column_name = 'preferred_datetime'
       `);
       
-      if (datetimeCheck && datetimeCheck.length > 0 && datetimeCheck[0].data_type === 'text') {
+      if (datetimeCheck && datetimeCheck.data_type === 'text') {
         console.log('🔄 Converting preferred_datetime from TEXT to TIMESTAMP...');
         
         // First, add a temporary column
@@ -385,8 +385,20 @@ async function runDatabaseMigrations() {
         `);
         
         console.log('✅ preferred_datetime column converted to TIMESTAMP');
-      } else {
+      } else if (datetimeCheck && datetimeCheck.data_type === 'timestamp') {
         console.log('ℹ️ preferred_datetime column already has correct type');
+      } else {
+        // Column might not exist or be in an inconsistent state, ensure it exists as TIMESTAMP
+        console.log('🔄 Ensuring preferred_datetime column exists as TIMESTAMP...');
+        try {
+          await runQuery(`
+            ALTER TABLE bookings 
+            ALTER COLUMN preferred_datetime TYPE TIMESTAMP USING preferred_datetime::timestamp
+          `);
+          console.log('✅ preferred_datetime column type fixed');
+        } catch (alterError) {
+          console.log('ℹ️ Column type alteration not needed');
+        }
       }
     } catch (error) {
       console.log('ℹ️ preferred_datetime migration skipped:', error.message);

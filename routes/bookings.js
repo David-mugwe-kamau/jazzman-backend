@@ -199,7 +199,8 @@ router.post('/', validateBooking, async (req, res) => {
       const totalBookingsToday = await getRow(`
         SELECT COUNT(*) as count 
         FROM bookings 
-        WHERE DATE(created_at) = CURRENT_DATE 
+        WHERE created_at >= CURRENT_DATE 
+        AND created_at < (CURRENT_DATE + INTERVAL '1 day')
         AND status != 'cancelled'
       `);
       
