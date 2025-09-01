@@ -279,6 +279,9 @@ async function initializePostgresTables() {
     // Insert default working hours
     await insertDefaultWorkingHoursPostgres();
     
+    // Insert default barbers
+    await insertDefaultBarbersPostgres();
+    
     // Insert default admin user
     await insertDefaultAdminPostgres();
 
@@ -463,6 +466,52 @@ async function insertDefaultWorkingHoursPostgres() {
     } catch (error) {
       console.error('Error inserting working hours:', error.message);
     }
+  }
+}
+
+// Insert default barbers (PostgreSQL version)
+async function insertDefaultBarbersPostgres() {
+  try {
+    const defaultBarbers = [
+      {
+        name: 'David',
+        phone: '+254700000001',
+        email: 'david@jazzman.com',
+        identity_badge_number: 'JM001'
+      },
+      {
+        name: 'Joseph',
+        phone: '+254700000002',
+        email: 'joseph@jazzman.com',
+        identity_badge_number: 'JM002'
+      },
+      {
+        name: 'Yusuph',
+        phone: '+254700000003',
+        email: 'yusuph@jazzman.com',
+        identity_badge_number: 'JM003'
+      }
+    ];
+
+    for (const barber of defaultBarbers) {
+      try {
+        await runQuery(`
+          INSERT INTO barbers (name, phone, email, identity_badge_number, is_active) 
+          VALUES ($1, $2, $3, $4, $5)
+          ON CONFLICT (identity_badge_number) DO UPDATE SET
+            name = EXCLUDED.name,
+            phone = EXCLUDED.phone,
+            email = EXCLUDED.email,
+            is_active = EXCLUDED.is_active
+        `, [barber.name, barber.phone, barber.email, barber.identity_badge_number, true]);
+        
+        console.log(`✅ Default barber created/updated: ${barber.name} (${barber.identity_badge_number})`);
+      } catch (error) {
+        console.error(`Error inserting barber ${barber.name}:`, error.message);
+      }
+    }
+  } catch (error) {
+    console.error('Error inserting default barbers:', error.message);
   }
 }
 
