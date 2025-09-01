@@ -766,20 +766,32 @@ router.put('/:id', [
       });
     }
 
-    // Update the booking
+    // Update the booking - simplified approach
     const updateQuery = `
       UPDATE bookings 
-      SET preferred_datetime = $1::timestamp, 
-          notes = COALESCE($2, (SELECT notes FROM bookings WHERE id = $3)),
+      SET preferred_datetime = $1, 
           updated_at = CURRENT_TIMESTAMP 
-      WHERE id = $3::integer
+      WHERE id = $2
       RETURNING *
     `;
     
-    const updatedBooking = await runQuery(updateQuery, [preferred_datetime, notes, id]);
+    // Only update notes if provided
+    const notesQuery = notes ? `
+      UPDATE bookings 
+      SET notes = $1 
+      WHERE id = $2
+    ` : null;
+    
+    // Update datetime first
+    const updatedBooking = await runQuery(updateQuery, [preferred_datetime, id]);
     
     if (!updatedBooking || !updatedBooking.rows || updatedBooking.rows.length === 0) {
-      throw new Error('Failed to update booking');
+      throw new Error('Failed to update booking datetime');
+    }
+    
+    // Update notes separately if provided
+    if (notesQuery && notes) {
+      await runQuery(notesQuery, [notes, id]);
     }
     
     res.json({
