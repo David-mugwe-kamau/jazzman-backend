@@ -65,10 +65,10 @@ router.post('/', validateBooking, async (req, res) => {
           -- Same time slot (exact match)
           preferred_datetime = $1 
           OR 
-          -- Overlapping time slots (1 hour service + 1 hour travel buffer each way)
+          -- Overlapping time slots (1 hour before + 1 hour service + 1 hour after = 3 hours total)
           (
             preferred_datetime BETWEEN 
-              $2::timestamp - INTERVAL '1 hour' AND $3::timestamp + INTERVAL '1 hour'
+              $2::timestamp - INTERVAL '1 hour' AND $2::timestamp + INTERVAL '2 hours'
           )
         )
       LIMIT 1
@@ -79,22 +79,31 @@ router.post('/', validateBooking, async (req, res) => {
         success: false,
         message: `This time slot is not available. All barbers are currently booked at this time. Please choose a different time slot.`,
         error: 'TIME_SLOT_CONFLICT',
-        suggestion: 'Try booking 3 hours later or earlier to avoid conflicts'
+        suggestion: 'Try booking 3 hours later or earlier to avoid conflicts (each booking blocks a 3-hour time slot)'
       });
     }
 
 
 
     // Check for customer double-booking (same customer, same day)
+    // Also check for overlapping time slots (3-hour blocks)
     const customerConflict = await getRow(`
       SELECT 
         id, service_type, preferred_datetime, status
       FROM bookings 
       WHERE 
         customer_phone = $1 
-        AND preferred_datetime >= $2::date
-        AND preferred_datetime < ($2::date + interval '1 day')
         AND status NOT IN ('cancelled', 'completed', 'no_show')
+        AND (
+          -- Same day booking
+          (preferred_datetime >= $2::date AND preferred_datetime < ($2::date + interval '1 day'))
+          OR
+          -- Overlapping time slots (3-hour blocks)
+          (
+            preferred_datetime BETWEEN 
+              $2::timestamp - INTERVAL '1 hour' AND $2::timestamp + INTERVAL '2 hours'
+          )
+        )
       LIMIT 1
     `, [customer_phone, preferred_datetime]);
 
@@ -213,10 +222,10 @@ router.post('/', validateBooking, async (req, res) => {
           -- Same time slot (exact match)
           preferred_datetime = $2 
           OR 
-          -- Overlapping time slots for the same barber (1 hour service + 1 hour travel buffer each way)
+          -- Overlapping time slots for the same barber (1 hour before + 1 hour service + 1 hour after = 3 hours total)
           (
             preferred_datetime BETWEEN 
-              $3::timestamp - INTERVAL '1 hour' AND $4::timestamp + INTERVAL '1 hour'
+              $3::timestamp - INTERVAL '1 hour' AND $3::timestamp + INTERVAL '2 hours'
           )
         )
         LIMIT 1
@@ -273,7 +282,7 @@ router.post('/', validateBooking, async (req, res) => {
         success: false,
         message: `All barbers are currently booked at this time. Please choose a different time slot.`,
         error: 'ALL_BARBERS_BUSY',
-        suggestion: 'Try booking 3 hours later or earlier to avoid conflicts'
+        suggestion: 'Try booking 3 hours later or earlier to avoid conflicts (each booking blocks a 3-hour time slot)'
       });
     }
     
