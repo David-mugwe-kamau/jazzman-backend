@@ -770,7 +770,7 @@ router.put('/:id', [
     const updateQuery = `
       UPDATE bookings 
       SET preferred_datetime = $1, 
-          notes = COALESCE($2, notes),
+          notes = CASE WHEN $2 IS NOT NULL THEN $2 ELSE notes END,
           updated_at = CURRENT_TIMESTAMP 
       WHERE id = $3
       RETURNING *
