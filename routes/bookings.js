@@ -769,10 +769,10 @@ router.put('/:id', [
     // Update the booking
     const updateQuery = `
       UPDATE bookings 
-      SET preferred_datetime = $1, 
-          notes = CASE WHEN $2 IS NOT NULL THEN $2 ELSE notes END,
+      SET preferred_datetime = $1::timestamp, 
+          notes = CASE WHEN $2::text IS NOT NULL THEN $2::text ELSE notes END,
           updated_at = CURRENT_TIMESTAMP 
-      WHERE id = $3
+      WHERE id = $3::integer
       RETURNING *
     `;
     
