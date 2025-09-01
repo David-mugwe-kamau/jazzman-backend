@@ -315,35 +315,23 @@ router.post('/', validateBooking, async (req, res) => {
       });
     }
 
-    // Send barber assignment notification
-    try {
-      console.log(`🔍 Attempting to send barber notification to: ${assignedBarber.name}`);
-      console.log(`🔍 Barber email: ${assignedBarber.email || 'NOT SET'}`);
-      console.log(`🔍 Barber details:`, {
-        id: assignedBarber.id,
-        name: assignedBarber.name,
-        email: assignedBarber.email,
-        phone: assignedBarber.phone
-      });
+    // Send barber assignment notification ASYNCHRONOUSLY (don't wait for email)
+    // This ensures the booking response is sent immediately to the customer
+    if (assignedBarber.email) {
+      console.log(`🔍 Sending barber notification to: ${assignedBarber.name} (${assignedBarber.email})`);
       
-      // Check email configuration
-      console.log(`🔍 Email configuration:`, {
-        EMAIL_USER: process.env.EMAIL_USER || 'NOT SET',
-        EMAIL_SERVICE: process.env.EMAIL_SERVICE || 'NOT SET',
-        EMAIL_PASS: process.env.EMAIL_PASS ? 'SET' : 'NOT SET'
-      });
-      
-      if (!assignedBarber.email) {
-        console.log(`⚠️ Barber ${assignedBarber.name} has no email address. Cannot send email notification.`);
-        console.log(`📱 Consider sending SMS notification to: ${assignedBarber.phone}`);
-      } else {
-        await sendBarberAssignmentNotification(assignedBarber, booking);
-        console.log(`✅ Barber notification sent to ${assignedBarber.name}`);
-      }
-    } catch (emailError) {
-      console.error('⚠️ Failed to send barber notification:', emailError);
-      console.error('⚠️ Email error details:', emailError.message);
-      // Don't fail the booking creation if email fails
+      // Fire-and-forget email notification (don't await)
+      sendBarberAssignmentNotification(assignedBarber, booking)
+        .then(() => {
+          console.log(`✅ Barber notification sent successfully to ${assignedBarber.name}`);
+        })
+        .catch((emailError) => {
+          console.error(`⚠️ Failed to send barber notification to ${assignedBarber.name}:`, emailError.message);
+          // Don't fail the booking creation if email fails
+        });
+    } else {
+      console.log(`⚠️ Barber ${assignedBarber.name} has no email address. Cannot send email notification.`);
+      console.log(`📱 Consider sending SMS notification to: ${assignedBarber.phone}`);
     }
 
     res.status(201).json({

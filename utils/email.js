@@ -13,11 +13,25 @@ const createTransporter = () => {
     auth: {
       user: process.env.EMAIL_USER || 'jazzmanhousecalls@gmail.com',
       pass: process.env.EMAIL_PASS
+    },
+    // Performance optimizations
+    pool: true, // Use pooled connections
+    maxConnections: 5, // Maximum number of connections
+    maxMessages: 100, // Maximum messages per connection
+    rateLimit: 5, // Maximum messages per second
+    // Connection timeout
+    connectionTimeout: 5000, // 5 seconds
+    greetingTimeout: 5000, // 5 seconds
+    socketTimeout: 10000, // 10 seconds
+    // TLS options for better performance
+    secure: true,
+    tls: {
+      rejectUnauthorized: false
     }
   });
 };
 
-// Generic email sending function
+// Generic email sending function with timeout
 const sendEmail = async (emailOptions) => {
   try {
     const transporter = createTransporter();
@@ -36,7 +50,15 @@ const sendEmail = async (emailOptions) => {
       text: emailOptions.text
     };
 
-    const info = await transporter.sendMail(mailOptions);
+    // Add timeout to prevent hanging emails
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Email sending timeout after 10 seconds')), 10000);
+    });
+
+    const emailPromise = transporter.sendMail(mailOptions);
+    
+    // Race between email sending and timeout
+    const info = await Promise.race([emailPromise, timeoutPromise]);
     console.log('Email sent successfully:', info.messageId);
     return info;
 
