@@ -376,7 +376,7 @@ router.get('/', async (req, res) => {
   try {
     const { status, barber, date, limit = 50, offset = 0, show_completed = 'false' } = req.query;
     
-    let sql = 'SELECT *, preferred_datetime AT TIME ZONE \'UTC\' AT TIME ZONE \'Africa/Nairobi\' as local_datetime FROM bookings WHERE 1=1';
+    let sql = 'SELECT * FROM bookings WHERE 1=1';
     const params = [];
 
     // Add filters
@@ -402,16 +402,13 @@ router.get('/', async (req, res) => {
     // }
 
     // Add ordering and pagination
-    sql += ' ORDER BY created_at DESC LIMIT $' + (params.length + 1) + ' OFFSET ' + (params.length + 2);
+    sql += ' ORDER BY created_at DESC LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2);
     params.push(parseInt(limit), parseInt(offset));
 
     const bookings = await getAll(sql, params);
 
-    // Convert datetime to local timezone for display
-    const bookingsWithLocalTime = bookings.map(booking => ({
-      ...booking,
-      preferred_datetime: booking.local_datetime || booking.preferred_datetime
-    }));
+    // Return bookings as-is (timezone fix will be added later)
+    const bookingsWithLocalTime = bookings;
 
     res.json({
       success: true,
@@ -438,12 +435,7 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    const booking = await getRow(`
-      SELECT *, 
-             preferred_datetime AT TIME ZONE 'UTC' AT TIME ZONE 'Africa/Nairobi' as local_datetime 
-      FROM bookings 
-      WHERE id = $1
-    `, [id]);
+    const booking = await getRow('SELECT * FROM bookings WHERE id = $1', [id]);
     
     if (!booking) {
       return res.status(404).json({
@@ -452,11 +444,8 @@ router.get('/:id', async (req, res) => {
       });
     }
 
-    // Convert datetime to local timezone for display
-    const bookingWithLocalTime = {
-      ...booking,
-      preferred_datetime: booking.local_datetime || booking.preferred_datetime
-    };
+    // Return booking as-is (timezone fix will be added later)
+    const bookingWithLocalTime = { ...booking };
 
     res.json({
       success: true,
