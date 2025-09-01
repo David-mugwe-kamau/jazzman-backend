@@ -63,11 +63,11 @@ router.get('/daily-analysis', async (req, res) => {
     const params = [];
     
     if (start_date && end_date) {
-      dateFilter = 'WHERE DATE(b.created_at) BETWEEN $1 AND $2';
+      dateFilter = 'WHERE b.created_at >= $1::date AND b.created_at < ($2::date + interval \'1 day\')';
       params.push(start_date, end_date);
     } else {
       // Default to last 30 days
-      dateFilter = 'WHERE DATE(b.created_at) >= CURRENT_DATE - INTERVAL \'30 days\'';
+      dateFilter = "WHERE b.created_at >= (CURRENT_DATE - INTERVAL '30 days')";
     }
 
     const dailyAnalysis = await getAll(`
@@ -136,7 +136,7 @@ router.get('/weekly-analysis', async (req, res) => {
         COUNT(DISTINCT b.customer_phone) as unique_customers,
         COUNT(DISTINCT b.barber_id) as active_barbers
       FROM bookings b
-      WHERE DATE(b.created_at) >= CURRENT_DATE - INTERVAL '${weeks * 7} days'
+      WHERE b.created_at >= CURRENT_DATE - INTERVAL '${weeks * 7} days'
       GROUP BY TO_CHAR(b.created_at, 'IYYY-IW')
       ORDER BY week DESC
     `);
@@ -149,7 +149,7 @@ router.get('/weekly-analysis', async (req, res) => {
         COUNT(*) as count,
         SUM(b.service_price) as revenue
       FROM bookings b
-      WHERE DATE(b.created_at) >= CURRENT_DATE - INTERVAL '${weeks * 7} days'
+      WHERE b.created_at >= CURRENT_DATE - INTERVAL '${weeks * 7} days'
       GROUP BY TO_CHAR(b.created_at, 'IYYY-IW'), b.service_type
       ORDER BY week DESC, revenue DESC
     `);
@@ -194,7 +194,7 @@ router.get('/barber-performance', async (req, res) => {
         MAX(bk.created_at) as last_booking
       FROM barbers b
       LEFT JOIN bookings bk ON b.id = bk.barber_id 
-                 AND DATE(bk.created_at) BETWEEN $1 AND $2
+                 AND bk.created_at >= $1::date AND bk.created_at < ($2::date + interval '1 day')
        WHERE b.is_active = true
       GROUP BY b.id
       ORDER BY period_revenue DESC, period_bookings DESC
@@ -210,7 +210,7 @@ router.get('/barber-performance', async (req, res) => {
         SUM(CASE WHEN bk.status = 'completed' THEN bk.service_price ELSE 0 END) as revenue
       FROM barbers b
       JOIN bookings bk ON b.id = bk.barber_id
-             WHERE DATE(bk.created_at) BETWEEN $1 AND $2
+             WHERE bk.created_at >= $1::date AND bk.created_at < ($2::date + interval '1 day')
          AND b.is_active = true
       GROUP BY b.id, DATE(bk.created_at)
       ORDER BY b.name, date DESC
@@ -250,7 +250,7 @@ router.get('/revenue', async (req, res) => {
         SUM(CASE WHEN p.payment_method = 'cash' THEN p.amount ELSE 0 END) as cash_revenue,
         SUM(CASE WHEN p.payment_method = 'card' THEN p.amount ELSE 0 END) as card_revenue
       FROM payments p
-             WHERE DATE(p.created_at) BETWEEN $1 AND $2
+             WHERE p.created_at >= $1::date AND p.created_at < ($2::date + interval '1 day')
      `, [startDate, endDate]);
 
     // Get daily revenue trends
@@ -263,7 +263,7 @@ router.get('/revenue', async (req, res) => {
         COUNT(CASE WHEN p.payment_method = 'cash' THEN 1 END) as cash_count,
         COUNT(CASE WHEN p.payment_method = 'card' THEN 1 END) as card_count
       FROM payments p
-             WHERE DATE(p.created_at) BETWEEN $1 AND $2
+             WHERE p.created_at >= $1::date AND p.created_at < ($2::date + interval '1 day')
        GROUP BY DATE(p.created_at)
       ORDER BY date DESC
     `, [startDate, endDate]);
@@ -277,7 +277,7 @@ router.get('/revenue', async (req, res) => {
         SUM(CASE WHEN p.status = 'completed' THEN p.amount ELSE 0 END) as total_revenue,
         AVG(CASE WHEN p.status = 'completed' THEN p.amount ELSE NULL END) as average_amount
       FROM payments p
-             WHERE DATE(p.created_at) BETWEEN $1 AND $2
+             WHERE p.created_at >= $1::date AND p.created_at < ($2::date + interval '1 day')
        GROUP BY p.payment_method
       ORDER BY total_revenue DESC
     `, [startDate, endDate]);
@@ -473,7 +473,7 @@ async function getBookingStats(startDate, endDate) {
       COUNT(DISTINCT customer_phone) as unique_customers,
       COUNT(DISTINCT barber_id) as active_barbers
     FROM bookings 
-    WHERE DATE(created_at) BETWEEN $1 AND $2
+    WHERE created_at >= $1::date AND created_at < ($2::date + interval '1 day')
   `, [startDate, endDate]);
 }
 
@@ -486,7 +486,7 @@ async function getRevenueStats(startDate, endDate) {
       COUNT(CASE WHEN p.status = 'failed' THEN 1 END) as failed_payments,
       AVG(CASE WHEN p.status = 'completed' THEN p.amount ELSE NULL END) as average_payment
     FROM payments p
-    WHERE DATE(p.created_at) BETWEEN $1 AND $2
+    WHERE p.created_at >= $1::date AND p.created_at < ($2::date + interval '1 day')
   `, [startDate, endDate]);
 }
 
@@ -502,7 +502,7 @@ async function getBarberPerformance(startDate, endDate) {
       AVG(CASE WHEN bk.status = 'completed' THEN bk.service_price ELSE NULL END) as average_service_price
     FROM barbers b
     LEFT JOIN bookings bk ON b.id = bk.barber_id 
-      AND DATE(bk.created_at) BETWEEN $1 AND $2
+      AND bk.created_at >= $1::date AND bk.created_at < ($2::date + interval '1 day')
     WHERE b.is_active = true
     GROUP BY b.id
     ORDER BY period_revenue DESC
@@ -518,7 +518,7 @@ async function getServiceBreakdown(startDate, endDate) {
       COUNT(*) as bookings,
       SUM(CASE WHEN status = 'completed' THEN service_price ELSE 0 END) as revenue
     FROM bookings 
-    WHERE DATE(created_at) BETWEEN $1 AND $2
+    WHERE created_at >= $1::date AND created_at < ($2::date + interval '1 day')
     GROUP BY service_type
     ORDER BY revenue DESC
   `, [startDate, endDate]);
@@ -532,7 +532,7 @@ async function getDailyTrends(startDate, endDate) {
       COUNT(*) as bookings,
       SUM(CASE WHEN status = 'completed' THEN service_price ELSE 0 END) as revenue
     FROM bookings 
-    WHERE DATE(created_at) BETWEEN $1 AND $2
+    WHERE created_at >= $1::date AND created_at < ($2::date + interval '1 day')
     GROUP BY DATE(created_at)
     ORDER BY date DESC
     LIMIT 30
@@ -547,7 +547,7 @@ async function getTopServices(startDate, endDate) {
       COUNT(*) as bookings,
       SUM(CASE WHEN status = 'completed' THEN service_price ELSE 0 END) as revenue
     FROM bookings 
-    WHERE DATE(created_at) BETWEEN $1 AND $2
+    WHERE created_at >= $1::date AND created_at < ($2::date + interval '1 day')
     GROUP BY service_type
     ORDER BY revenue DESC
     LIMIT 5
@@ -563,7 +563,7 @@ async function getCustomerMetrics(startDate, endDate) {
       COUNT(*) as total_bookings,
       AVG(service_price) as average_booking_value
     FROM bookings 
-    WHERE DATE(created_at) BETWEEN $1 AND $2
+    WHERE created_at >= $1::date AND created_at < ($2::date + interval '1 day')
   `, [startDate, endDate]);
 }
 

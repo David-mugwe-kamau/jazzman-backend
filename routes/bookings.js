@@ -98,7 +98,8 @@ router.post('/', validateBooking, async (req, res) => {
       FROM bookings 
       WHERE 
         customer_phone = $1 
-        AND DATE(preferred_datetime) = DATE($2::timestamp)
+        AND preferred_datetime >= $2::date
+        AND preferred_datetime < ($2::date + interval '1 day')
         AND status NOT IN ('cancelled', 'completed', 'no_show')
       LIMIT 1
     `, [customer_phone, preferred_datetime]);
@@ -326,7 +327,8 @@ router.get('/', async (req, res) => {
     }
     
     if (date) {
-      sql += ' AND DATE(preferred_datetime) = DATE($' + (params.length + 1) + '::timestamp)';
+      sql += ' AND preferred_datetime >= $' + (params.length + 1) + '::date';
+      sql += ' AND preferred_datetime < ($' + (params.length + 1) + '::date + interval \'1 day\')';
       params.push(date);
     }
 

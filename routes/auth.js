@@ -141,4 +141,38 @@ router.get('/verify', authenticateToken, async (req, res) => {
   }
 });
 
+// Change password (authenticated)
+router.post('/change-password', authenticateToken, [
+  body('current_password').trim().notEmpty().withMessage('Current password is required'),
+  body('new_password').isLength({ min: 8 }).withMessage('New password must be at least 8 characters')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const userId = req.user.id;
+    const { current_password, new_password } = req.body;
+
+    const admin = await getRow('SELECT id, password_hash FROM admin_users WHERE id = $1 AND is_active = true', [userId]);
+    if (!admin) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const valid = await bcrypt.compare(current_password, admin.password_hash);
+    if (!valid) {
+      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+    }
+
+    const hashed = bcrypt.hashSync(new_password, 10);
+    await runQuery('UPDATE admin_users SET password_hash = $1 WHERE id = $2', [hashed, userId]);
+
+    return res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ success: false, message: 'Failed to change password', error: error.message });
+  }
+});
+
 module.exports = router;

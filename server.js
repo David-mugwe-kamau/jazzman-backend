@@ -195,38 +195,14 @@ app.put('/api/bookings/:id/status', async (req, res) => {
   });
 }
     
-    // Update booking status in database
-    const db = require('sqlite3').verbose();
-    const dbPath = path.join(__dirname, 'data', 'jazzman.db');
-    console.log('🔍 Database path for booking status update:', dbPath);
-    const database = new db.Database(dbPath);
-    
-    database.run(
-      'UPDATE bookings SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [status, id],
-      function(err) {
-        if (err) {
-          console.error('Error updating booking status:', err);
-          res.status(500).json({
-            success: false,
-            message: 'Database error updating booking status'
-          });
-        } else if (this.changes === 0) {
-          res.status(404).json({
-            success: false,
-            message: 'Booking not found'
-          });
-        } else {
-          res.json({
-            success: true,
-            message: `Booking status updated to ${status}`,
-            booking_id: id,
-            new_status: status
-          });
-        }
-        database.close();
-      }
-    );
+    // Update booking status in PostgreSQL
+    const { runQuery, getRow } = require('./config/database');
+    const existing = await getRow('SELECT id FROM bookings WHERE id = $1', [id]);
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+    await runQuery('UPDATE bookings SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [status, id]);
+    res.json({ success: true, message: `Booking status updated to ${status}`, booking_id: id, new_status: status });
     
   } catch (error) {
     console.error('Error in booking status update:', error);
@@ -242,36 +218,13 @@ app.get('/api/bookings/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Get booking details from database
-    const db = require('sqlite3').verbose();
-    const dbPath = path.join(__dirname, 'data', 'jazzman.db');
-    console.log('🔍 Database path for single booking:', dbPath);
-    const database = new db.Database(dbPath);
-    
-    database.get(
-      'SELECT * FROM bookings WHERE id = ?',
-      [id],
-      function(err, row) {
-        if (err) {
-          console.error('Error fetching booking:', err);
-          res.status(500).json({
-            success: false,
-            message: 'Database error fetching booking'
-          });
-        } else if (!row) {
-          res.status(404).json({
-            success: false,
-            message: 'Booking not found'
-          });
-        } else {
-          res.json({
-            success: true,
-            booking: row
-          });
-        }
-        database.close();
-      }
-    );
+    // Get booking details from PostgreSQL
+    const { getRow } = require('./config/database');
+    const row = await getRow('SELECT * FROM bookings WHERE id = $1', [id]);
+    if (!row) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+    res.json({ success: true, booking: row });
     
   } catch (error) {
     console.error('Error fetching booking:', error);
@@ -295,38 +248,14 @@ app.put('/api/bookings/:id/reschedule', async (req, res) => {
       });
     }
     
-    // Update booking datetime in database
-    const db = require('sqlite3').verbose();
-    const dbPath = path.join(__dirname, 'data', 'jazzman.db');
-    console.log('🔍 Database path for booking reschedule:', dbPath);
-    const database = new db.Database(dbPath);
-    
-    database.run(
-      'UPDATE bookings SET preferred_datetime = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [preferred_datetime, id],
-      function(err) {
-        if (err) {
-          console.error('Error rescheduling booking:', err);
-          res.status(500).json({
-            success: false,
-            message: 'Database error rescheduling booking'
-          });
-        } else if (this.changes === 0) {
-          res.status(404).json({
-            success: false,
-            message: 'Booking not found'
-          });
-        } else {
-          res.json({
-            success: true,
-            message: 'Booking rescheduled successfully',
-            booking_id: id,
-            new_datetime: preferred_datetime
-          });
-        }
-        database.close();
-      }
-    );
+    // Update booking datetime in PostgreSQL
+    const { runQuery: runQuery2, getRow: getRow2 } = require('./config/database');
+    const exists = await getRow2('SELECT id FROM bookings WHERE id = $1', [id]);
+    if (!exists) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+    await runQuery2('UPDATE bookings SET preferred_datetime = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [preferred_datetime, id]);
+    res.json({ success: true, message: 'Booking rescheduled successfully', booking_id: id, new_datetime: preferred_datetime });
     
   } catch (error) {
     console.error('Error in booking reschedule:', error);

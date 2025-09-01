@@ -127,8 +127,14 @@ router.post('/reset', async (req, res) => {
     await runQuery('DELETE FROM bookings');
     await runQuery('DELETE FROM payments');
     
-    // Reset auto-increment counters
-    await runQuery('DELETE FROM sqlite_sequence WHERE name IN ("barbers", "bookings", "payments")');
+    // Reset sequences (PostgreSQL)
+    try {
+      await runQuery("SELECT setval(pg_get_serial_sequence('barbers','id'), COALESCE(MAX(id), 1)) FROM barbers");
+      await runQuery("SELECT setval(pg_get_serial_sequence('bookings','id'), COALESCE(MAX(id), 1)) FROM bookings");
+      await runQuery("SELECT setval(pg_get_serial_sequence('payments','id'), COALESCE(MAX(id), 1)) FROM payments");
+    } catch (e) {
+      console.log('ℹ️ Sequence reset skipped:', e.message);
+    }
     
     res.json({
       success: true,
