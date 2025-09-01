@@ -57,8 +57,7 @@ router.post('/', validateBooking, async (req, res) => {
     // All services take 1 hour + 1 hour travel buffer each way = 3 hour total per booking
     const timeSlotConflict = await getRow(`
       SELECT 
-        id, customer_name, customer_phone, barber_name, service_type,
-        preferred_datetime, status
+        id, barber_name, service_type, preferred_datetime, status
       FROM bookings 
       WHERE 
         status NOT IN ('cancelled', 'completed', 'no_show')
@@ -78,14 +77,9 @@ router.post('/', validateBooking, async (req, res) => {
     if (timeSlotConflict) {
       return res.status(409).json({
         success: false,
-        message: `This time slot is not available. Another customer (${timeSlotConflict.customer_name}) has a ${timeSlotConflict.service_type} appointment at ${new Date(timeSlotConflict.preferred_datetime).toLocaleString('en-KE')}. All services require a 3-hour time slot (1 hour service + 1 hour travel buffer each way). Please choose a different time.`,
+        message: `This time slot is not available. All barbers are currently booked at this time. Please choose a different time slot.`,
         error: 'TIME_SLOT_CONFLICT',
-        conflicting_booking: {
-          id: timeSlotConflict.id,
-          customer_name: timeSlotConflict.customer_name,
-          service_type: timeSlotConflict.service_type,
-          preferred_datetime: timeSlotConflict.preferred_datetime
-        }
+        suggestion: 'Try booking 3 hours later or earlier to avoid conflicts'
       });
     }
 
@@ -107,13 +101,9 @@ router.post('/', validateBooking, async (req, res) => {
     if (customerConflict) {
       return res.status(409).json({
         success: false,
-        message: `You already have a ${customerConflict.service_type} appointment scheduled for ${new Date(customerConflict.preferred_datetime).toLocaleString('en-KE')} on the same day. Please cancel your existing appointment first or choose a different date.`,
+        message: `You already have a ${customerConflict.service_type} appointment scheduled for the same day. Please cancel your existing appointment first or choose a different date.`,
         error: 'CUSTOMER_DOUBLE_BOOKING',
-        existing_booking: {
-          id: customerConflict.id,
-          service_type: customerConflict.service_type,
-          preferred_datetime: customerConflict.preferred_datetime
-        }
+        suggestion: 'You can only have one appointment per day'
       });
     }
 
@@ -168,7 +158,7 @@ router.post('/', validateBooking, async (req, res) => {
     
     // If no preferred barber or preferred barber unavailable, auto-assign
     if (!assignedBarber) {
-      // Get all available barbers in a fixed order for round-robin assignment
+      // Get all available barbers ordered by badge ID for proper round-robin assignment
       const availableBarbers = await getAll(`
         SELECT 
           id, name, phone, email, identity_badge_number,
@@ -176,17 +166,11 @@ router.post('/', validateBooking, async (req, res) => {
           is_active, is_blocked
         FROM barbers 
         WHERE is_active = true AND is_blocked = false 
-        ORDER BY 
-          CASE name
-            WHEN 'David' THEN 1
-            WHEN 'yusuph' THEN 2
-            WHEN 'Joseph' THEN 3
-            ELSE 4
-          END
+        ORDER BY identity_badge_number
       `);
       
       // Debug: Log all available barbers
-      console.log(`🔍 Available barbers for assignment:`, availableBarbers.map(b => `${b.name} (ID: ${b.id}, Active: ${b.is_active}, Blocked: ${b.is_blocked})`));
+      console.log(`🔍 Available barbers for assignment:`, availableBarbers.map(b => `${b.name} (Badge: ${b.identity_badge_number}, ID: ${b.id})`));
       
       if (availableBarbers.length === 0) {
         return res.status(503).json({
@@ -208,15 +192,14 @@ router.post('/', validateBooking, async (req, res) => {
       const barberIndex = totalBookings % availableBarbers.length;
       assignedBarber = availableBarbers[barberIndex];
       
-      console.log(`🎯 Auto-assigning barber: ${assignedBarber.name} (ID: ${assignedBarber.id}) - Booking #${totalBookings + 1} of the day (Index: ${barberIndex}/${availableBarbers.length})`);
+      console.log(`🎯 Auto-assigning barber: ${assignedBarber.name} (Badge: ${assignedBarber.identity_badge_number}) - Booking #${totalBookings + 1} of the day (Index: ${barberIndex}/${availableBarbers.length})`);
     }
 
     // Check for barber-specific scheduling conflicts (prevent same barber from having overlapping appointments)
     // This ensures each barber has proper time management: 1 hour service + 1 hour travel buffer each way
     const barberSchedulingConflict = await getRow(`
       SELECT 
-        id, customer_name, customer_phone, barber_name, service_type,
-        preferred_datetime, status
+        id, barber_name, service_type, preferred_datetime, status
       FROM bookings 
       WHERE 
         barber_id = $1 
@@ -235,18 +218,94 @@ router.post('/', validateBooking, async (req, res) => {
     `, [assignedBarber.id, preferred_datetime, preferred_datetime, preferred_datetime]);
 
     if (barberSchedulingConflict) {
-      return res.status(409).json({
-        success: false,
-        message: `Barber ${assignedBarber.name} is not available at this time. They have another appointment (${barberSchedulingConflict.service_type} for ${barberSchedulingConflict.customer_name}) at ${new Date(barberSchedulingConflict.preferred_datetime).toLocaleString('en-KE')}. Please choose a different time or barber.`,
-        error: 'BARBER_SCHEDULING_CONFLICT',
-        conflicting_booking: {
-          id: barberSchedulingConflict.id,
-          customer_name: barberSchedulingConflict.customer_name,
-          service_type: barberSchedulingConflict.service_type,
-          preferred_datetime: barberSchedulingConflict.preferred_datetime,
-          barber_name: barberSchedulingConflict.barber_name
+      // Try to find the next available barber
+      const nextAvailableBarber = await getRow(`
+        SELECT id, name, phone, email, identity_badge_number, COALESCE(profile_photo, '') as profile_photo
+        FROM barbers 
+        WHERE is_active = true AND is_blocked = false 
+        AND id != $1
+        AND identity_badge_number > $2
+        ORDER BY identity_badge_number
+        LIMIT 1
+      `, [assignedBarber.id, assignedBarber.identity_badge_number]);
+
+      if (nextAvailableBarber) {
+        // Try to assign the next available barber
+        console.log(`🔄 Barber ${assignedBarber.name} is busy, trying next available: ${nextAvailableBarber.name}`);
+        assignedBarber = nextAvailableBarber;
+        
+        // Check if this barber is also busy
+        const nextBarberConflict = await getRow(`
+          SELECT id FROM bookings 
+          WHERE barber_id = $1 
+          AND status NOT IN ('cancelled', 'completed', 'no_show')
+          AND (
+            preferred_datetime = $2 
+            OR (
+              preferred_datetime BETWEEN 
+                $3::timestamp - INTERVAL '1 hour' AND $4::timestamp + INTERVAL '1 hour'
+            )
+          )
+          LIMIT 1
+        `, [assignedBarber.id, preferred_datetime, preferred_datetime, preferred_datetime]);
+
+        if (nextBarberConflict) {
+          // All barbers are busy at this time
+          return res.status(409).json({
+            success: false,
+            message: `All barbers are currently booked at this time. Please choose a different time slot.`,
+            error: 'ALL_BARBERS_BUSY',
+            suggestion: 'Try booking 3 hours later or earlier to avoid conflicts'
+          });
         }
-      });
+      } else {
+        // No more barbers available, try the first one (JM001)
+        const firstBarber = await getRow(`
+          SELECT id, name, phone, email, identity_badge_number, COALESCE(profile_photo, '') as profile_photo
+          FROM barbers 
+          WHERE is_active = true AND is_blocked = false 
+          ORDER BY identity_badge_number
+          LIMIT 1
+        `);
+        
+        if (firstBarber && firstBarber.id !== assignedBarber.id) {
+          console.log(`🔄 Trying first available barber: ${firstBarber.name}`);
+          assignedBarber = firstBarber;
+          
+          // Check if this barber is also busy
+          const firstBarberConflict = await getRow(`
+            SELECT id FROM bookings 
+            WHERE barber_id = $1 
+            AND status NOT IN ('cancelled', 'completed', 'no_show')
+            AND (
+              preferred_datetime = $2 
+              OR (
+                preferred_datetime BETWEEN 
+                  $3::timestamp - INTERVAL '1 hour' AND $4::timestamp + INTERVAL '1 hour'
+              )
+            )
+            LIMIT 1
+          `, [assignedBarber.id, preferred_datetime, preferred_datetime, preferred_datetime]);
+
+          if (firstBarberConflict) {
+            // All barbers are busy at this time
+            return res.status(409).json({
+              success: false,
+              message: `All barbers are currently booked at this time. Please choose a different time slot.`,
+              error: 'ALL_BARBERS_BUSY',
+              suggestion: 'Try booking 3 hours later or earlier to avoid conflicts'
+            });
+          }
+        } else {
+          // All barbers are busy at this time
+          return res.status(409).json({
+            success: false,
+            message: `All barbers are currently booked at this time. Please choose a different time slot.`,
+            error: 'ALL_BARBERS_BUSY',
+            suggestion: 'Try booking 3 hours later or earlier to avoid conflicts'
+          });
+        }
+      }
     }
     
     // Insert booking into database with assigned barber
