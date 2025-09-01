@@ -707,6 +707,97 @@ router.get('/available-slots/:date', async (req, res) => {
   }
 });
 
+// Reschedule booking (PUT endpoint for rescheduling)
+router.put('/:id', [
+  body('preferred_datetime').isISO8601().withMessage('Invalid date format'),
+  body('notes').optional().isString().withMessage('Notes must be a string')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { id } = req.params;
+    const { preferred_datetime, notes } = req.body;
+    
+    // Check if booking exists
+    const existingBooking = await getRow('SELECT * FROM bookings WHERE id = $1', [id]);
+    if (!existingBooking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Check if booking can be rescheduled (not completed or cancelled)
+    if (existingBooking.status === 'completed' || existingBooking.status === 'cancelled') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot reschedule a completed or cancelled booking'
+      });
+    }
+
+    // Check working hours for new datetime
+    const workingHoursCheck = await workingHoursManager.isWithinWorkingHours(preferred_datetime);
+    if (!workingHoursCheck.isOpen) {
+      return res.status(400).json({
+        success: false,
+        message: workingHoursCheck.reason,
+        nextOpen: workingHoursCheck.nextOpen,
+        error: 'BOOKING_OUTSIDE_HOURS'
+      });
+    }
+
+    // Check for barber conflicts at new time
+    const barberConflict = await getRow(`
+      SELECT id FROM bookings 
+      WHERE barber_name = $1 
+      AND id != $2 
+      AND status != 'cancelled'
+      AND preferred_datetime BETWEEN $3::timestamp - INTERVAL '1 hour' AND $3::timestamp + INTERVAL '2 hours'
+    `, [existingBooking.barber_name, id, preferred_datetime]);
+
+    if (barberConflict) {
+      return res.status(400).json({
+        success: false,
+        message: 'This time slot is not available. The assigned barber is busy at this time. Please choose a different time slot.',
+        error: 'BARBER_CONFLICT'
+      });
+    }
+
+    // Update the booking
+    const updateQuery = `
+      UPDATE bookings 
+      SET preferred_datetime = $1, 
+          notes = COALESCE($2, notes),
+          updated_at = CURRENT_TIMESTAMP 
+      WHERE id = $3
+      RETURNING *
+    `;
+    
+    const updatedBooking = await runQuery(updateQuery, [preferred_datetime, notes, id]);
+    
+    if (!updatedBooking || !updatedBooking.rows || updatedBooking.rows.length === 0) {
+      throw new Error('Failed to update booking');
+    }
+    
+    res.json({
+      success: true,
+      message: 'Booking rescheduled successfully',
+      booking: updatedBooking.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('Error rescheduling booking:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reschedule booking',
+      error: error.message
+    });
+  }
+});
+
 // Update booking details (general update)
 router.patch('/:id', [
   body('preferred_datetime').optional().isISO8601().withMessage('Invalid date format'),
