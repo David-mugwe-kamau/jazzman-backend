@@ -96,18 +96,18 @@ router.put('/:dayOfWeek', [
   body('is_open').isBoolean().withMessage('is_open must be a boolean'),
   body('open_time').custom((value, { req }) => {
     // If day is open, time must be valid HH:MM format
-    if (req.body.is_open && value && !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
+    if (req.body.is_open && value && value !== '' && !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
       throw new Error('Invalid open time format (HH:MM)');
     }
-    // If day is closed, time can be null or empty
+    // If day is closed, time can be null, empty, or empty string
     return true;
   }),
   body('close_time').custom((value, { req }) => {
     // If day is open, time must be valid HH:MM format
-    if (req.body.is_open && value && !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
+    if (req.body.is_open && value && value !== '' && !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
       throw new Error('Invalid close time format (HH:MM)');
     }
-    // If day is closed, time can be null or empty
+    // If day is closed, time can be null, empty, or empty string
     return true;
   }),
   body('notes').optional().isString().withMessage('Notes must be a string')
@@ -129,7 +129,11 @@ router.put('/:dayOfWeek', [
     
     console.log('📝 Processing updates for day:', dayOfWeek, 'with data:', updates);
     
-    // Validate that close time is after open time (only when day is open)
+    // Clean up the data - convert empty strings to null
+    if (updates.open_time === '') updates.open_time = null;
+    if (updates.close_time === '') updates.close_time = null;
+    
+    // Validate that close time is after open time (only when day is open and both times exist)
     if (updates.is_open && updates.open_time && updates.close_time) {
       if (updates.open_time >= updates.close_time) {
         console.log('❌ Invalid time range:', updates.open_time, '>=', updates.close_time);
