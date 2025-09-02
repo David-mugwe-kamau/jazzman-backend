@@ -95,19 +95,25 @@ router.get('/slots/:date', async (req, res) => {
 router.put('/:dayOfWeek', [
   body('is_open').isBoolean().withMessage('is_open must be a boolean'),
   body('open_time').custom((value, { req }) => {
+    console.log('🔍 Validating open_time:', { value, type: typeof value, isOpen: req.body.is_open });
     // If day is open, time must be valid HH:MM format
     if (req.body.is_open && value && value !== '' && !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
+      console.log('❌ Open time validation failed for value:', value);
       throw new Error('Invalid open time format (HH:MM)');
     }
     // If day is closed, time can be null, empty, or empty string
+    console.log('✅ Open time validation passed');
     return true;
   }),
   body('close_time').custom((value, { req }) => {
+    console.log('🔍 Validating close_time:', { value, type: typeof value, isOpen: req.body.is_open });
     // If day is open, time must be valid HH:MM format
     if (req.body.is_open && value && value !== '' && !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
+      console.log('❌ Close time validation failed for value:', value);
       throw new Error('Invalid close time format (HH:MM)');
     }
     // If day is closed, time can be null, empty, or empty string
+    console.log('✅ Close time validation passed');
     return true;
   }),
   body('notes').optional().isString().withMessage('Notes must be a string')
@@ -115,7 +121,8 @@ router.put('/:dayOfWeek', [
   try {
     console.log('🔄 PUT /working-hours/:dayOfWeek - Request received:', {
       dayOfWeek: req.params.dayOfWeek,
-      body: req.body
+      body: req.body,
+      headers: req.headers
     });
 
     const errors = validationResult(req);
@@ -132,6 +139,8 @@ router.put('/:dayOfWeek', [
     // Clean up the data - convert empty strings to null
     if (updates.open_time === '') updates.open_time = null;
     if (updates.close_time === '') updates.close_time = null;
+    
+    console.log('🧹 After cleanup:', updates);
     
     // Validate that close time is after open time (only when day is open and both times exist)
     if (updates.is_open && updates.open_time && updates.close_time) {

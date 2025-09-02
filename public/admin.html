@@ -4688,8 +4688,8 @@
                 // Update the day status
                 const updateData = {
                     is_open: isOpen,
-                    open_time: isOpen ? (day.open_time || '08:00') : null,
-                    close_time: isOpen ? (day.close_time || '18:00') : null,
+                    open_time: isOpen ? day.open_time : null,
+                    close_time: isOpen ? day.close_time : null,
                     notes: isOpen ? (day.notes || '') : '',
                     break_start: null,
                     break_end: null
@@ -4733,14 +4733,8 @@
                         input.disabled = !isOpen;
                         if (!isOpen) {
                             input.value = '--:--';
-                        } else if (input.value === '--:--' || input.value === '') {
-                            // Set default times if they were empty
-                            if (input.getAttribute('data-field') === 'open_time') {
-                                input.value = '08:00';
-                            } else if (input.getAttribute('data-field') === 'close_time') {
-                                input.value = '18:00';
-                            }
                         }
+                        // Removed default time assignments - let user set their own times
                         console.log(`✅ Time input ${input.type} ${isOpen ? 'enabled' : 'disabled'}`);
                     });
                     
