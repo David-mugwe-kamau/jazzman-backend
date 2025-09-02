@@ -498,14 +498,10 @@ async function insertDefaultBarbersPostgres() {
         await runQuery(`
           INSERT INTO barbers (name, phone, email, identity_badge_number, is_active) 
           VALUES ($1, $2, $3, $4, $5)
-          ON CONFLICT (identity_badge_number) DO UPDATE SET
-            name = EXCLUDED.name,
-            phone = EXCLUDED.phone,
-            email = EXCLUDED.email,
-            is_active = EXCLUDED.is_active
+          ON CONFLICT (identity_badge_number) DO NOTHING
         `, [barber.name, barber.phone, barber.email, barber.identity_badge_number, true]);
         
-        console.log(`✅ Default barber created/updated: ${barber.name} (${barber.identity_badge_number})`);
+        console.log(`✅ Default barber created: ${barber.name} (${barber.identity_badge_number})`);
       } catch (error) {
         console.error(`Error inserting barber ${barber.name}:`, error.message);
       }
